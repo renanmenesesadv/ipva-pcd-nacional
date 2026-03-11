@@ -290,23 +290,84 @@ export default function ResultPage({ dados, onVoltar }: ResultPageProps) {
               </div>
             </Card>
 
-            {/* Link Oficial */}
-            <Card className="p-8 mb-8 border-2 border-blue-100 bg-blue-50">
-              <h3 className="text-xl font-bold text-blue-900 mb-4">
-                Portal Oficial do Estado
+            {/* Sistema de Protocolo e Link Direto */}
+            <Card className="p-8 mb-8 border-2 border-green-200 bg-green-50">
+              <h3 className="text-xl font-bold text-green-900 mb-6">
+                📋 Como Protocolar no {estadoDados.nome}
               </h3>
-              <p className="text-gray-700 mb-4">
-                Acesse o portal oficial para mais informações e para protocolar
-                sua solicitação:
-              </p>
-              <a
-                href={estadoDados.link_oficial}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block px-6 py-3 bg-blue-700 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors"
-              >
-                Acessar Portal Oficial
-              </a>
+              <div className="space-y-5">
+                {/* Sistema de Protocolo */}
+                {(estadoDados as any).sistema_protocolo && (
+                  <div className="flex gap-3 items-start p-4 bg-white rounded-lg border border-green-200">
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-green-700 font-bold text-sm">1</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 mb-1">Sistema de Protocolo</p>
+                      <p className="text-gray-700">
+                        O {estadoDados.nome} utiliza o sistema{" "}
+                        <strong className="text-green-800">{(estadoDados as any).sistema_protocolo}</strong>{" "}
+                        para receber requerimentos de isenção de IPVA.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Condições para não-condutor */}
+                {(estadoDados as any).condicoes_nao_condutor && (
+                  <div className="flex gap-3 items-start p-4 bg-white rounded-lg border border-green-200">
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                      <span className="text-green-700 font-bold text-sm">2</span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 mb-1">Condições para Não-Condutor</p>
+                      <p className="text-gray-700">{(estadoDados as any).condicoes_nao_condutor}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Link de Protocolo */}
+                <div className="flex gap-3 items-start p-4 bg-white rounded-lg border border-green-200">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                    <span className="text-green-700 font-bold text-sm">3</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900 mb-2">Link Direto para Protocolo</p>
+                    {(estadoDados as any).link_protocolo ? (
+                      <a
+                        href={(estadoDados as any).link_protocolo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-700 text-white font-semibold rounded-lg hover:bg-green-800 transition-colors text-sm"
+                      >
+                        Acessar {(estadoDados as any).sistema_protocolo || 'Portal de Protocolo'} →
+                      </a>
+                    ) : (
+                      <a
+                        href={estadoDados.link_oficial}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-700 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors text-sm"
+                      >
+                        Acessar Portal Oficial →
+                      </a>
+                    )}
+                  </div>
+                </div>
+
+                {/* Link Oficial como referência adicional */}
+                <div className="text-sm text-gray-600 pt-2">
+                  <span className="font-medium">Link de referência da SEFAZ: </span>
+                  <a
+                    href={estadoDados.link_oficial}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline break-all"
+                  >
+                    {estadoDados.link_oficial}
+                  </a>
+                </div>
+              </div>
             </Card>
           </>
         )}

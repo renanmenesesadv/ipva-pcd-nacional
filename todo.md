@@ -48,3 +48,9 @@
 - [x] Usar autismo como exemplo central + outras deficiências abaixo
 - [x] Inserir tabela/lista de deficiências elegíveis no texto para gerar curiosidade
 - [x] Ajustar copywriting para público de pais de autistas
+
+## Fase 4 - Pesquisa Aprofundada por Estado (solicitado)
+- [x] Pesquisar regra de não-condutor em todos os 27 estados com fonte oficial
+- [x] Identificar sistema de protocolo (SEI, e-SAT, SIGET, etc.) de cada estado
+- [x] Encontrar link direto para protocolo na SEFAZ/SET de cada estado
+- [x] Atualizar arquivo estadosIPVAPCD.ts com dados corrigidos
