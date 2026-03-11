@@ -41,3 +41,10 @@
 - [ ] Pixel do Facebook/Meta para remarketing
 - [ ] Integração com Google Analytics
 - [ ] Campo UTM tracking para medir origem dos leads
+
+## Fase 3 - Correções e Melhorias Textuais (solicitado)
+- [x] Verificar e corrigir dado do RN sobre não-condutor
+- [x] Novo título principal: "Você pode estar pagando IPVA indevidamente"
+- [x] Usar autismo como exemplo central + outras deficiências abaixo
+- [x] Inserir tabela/lista de deficiências elegíveis no texto para gerar curiosidade
+- [x] Ajustar copywriting para público de pais de autistas

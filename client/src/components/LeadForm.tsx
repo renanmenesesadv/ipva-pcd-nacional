@@ -72,10 +72,10 @@ export default function LeadForm({ onLeadCapturado }: LeadFormProps) {
         <div className="lg:col-span-2 space-y-6">
           <div>
             <h2 className="text-3xl font-bold text-blue-900 mb-3">
-              Antes de começar...
+              Quase lá — só mais um passo
             </h2>
-            <p className="text-gray-600">
-              Informe seus dados para receber o relatório personalizado e ficar por dentro das novidades sobre direitos PCD.
+            <p className="text-gray-600 leading-relaxed">
+              Informe seus dados para receber o relatório personalizado e ficar por dentro dos seus direitos como família PCD.
             </p>
           </div>
 
@@ -113,7 +113,7 @@ export default function LeadForm({ onLeadCapturado }: LeadFormProps) {
               </div>
               <div>
                 <p className="font-semibold text-gray-900">Ações contra Plano de Saúde</p>
-                <p className="text-sm text-gray-600">Saiba como cobrar cobertura de TEA no seu plano</p>
+                <p className="text-sm text-gray-600">Seu plano nega cobertura de TEA? Saiba como agir</p>
               </div>
             </div>
           </div>
@@ -128,9 +128,10 @@ export default function LeadForm({ onLeadCapturado }: LeadFormProps) {
 
         {/* Coluna direita - Formulário */}
         <Card className="lg:col-span-3 p-8 border-2 border-blue-100 shadow-lg">
-          <h3 className="text-xl font-bold text-blue-900 mb-6">
+          <h3 className="text-xl font-bold text-blue-900 mb-2">
             Seus dados para o relatório
           </h3>
+          <p className="text-sm text-gray-500 mb-6">Gratuito · Resultado imediato · Sem compromisso</p>
 
           <div className="space-y-5">
             {/* Nome */}

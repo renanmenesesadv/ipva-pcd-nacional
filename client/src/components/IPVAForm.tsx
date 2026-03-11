@@ -102,10 +102,9 @@ export default function IPVAForm() {
 
     console.log("Deficiência válida?", deficienciaValida, "Deficiência selecionada:", formData.deficiencia);
 
-    // Validar se é não-condutor
+    // Validar se é não-condutor (campo pode ter "Sim" ou "Sim, com condições...")
     const aceitaNaoCondutor =
-      formData.condutor === "nao" &&
-      dadosEstado.aceita_nao_condutor.toLowerCase() === "sim";
+      dadosEstado.aceita_nao_condutor.toLowerCase().startsWith("sim");
 
     if (
       !deficienciaValida ||
