@@ -21,10 +21,18 @@ const DEFICIENCIAS_ELEGIVEIS = [
   { nome: "TDAH severo (em alguns estados)", destaque: false, estados: "Varia por estado" },
 ];
 
+interface LeadData {
+  nome: string;
+  email: string;
+  telefone: string;
+  deficiencia: string;
+}
+
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [documentoGerado, setDocumentoGerado] = useState<DadosDocumento | null>(null);
   const [leadCapturado, setLeadCapturado] = useState(false);
+  const [leadData, setLeadData] = useState<LeadData | null>(null);
 
   useEffect(() => {
     (window as any).__onDocumentoGerado = (dados: DadosDocumento) => {
@@ -32,7 +40,8 @@ export default function Home() {
     };
   }, []);
 
-  const handleLeadCapturado = () => {
+  const handleLeadCapturado = (dados: LeadData) => {
+    setLeadData(dados);
     setLeadCapturado(true);
   };
 
@@ -335,7 +344,7 @@ export default function Home() {
             {!leadCapturado ? (
               <LeadForm onLeadCapturado={handleLeadCapturado} />
             ) : (
-              <IPVAForm />
+              <IPVAForm dadosLead={leadData} />
             )}
           </div>
         </section>

@@ -54,3 +54,6 @@
 - [x] Identificar sistema de protocolo (SEI, e-SAT, SIGET, etc.) de cada estado
 - [x] Encontrar link direto para protocolo na SEFAZ/SET de cada estado
 - [x] Atualizar arquivo estadosIPVAPCD.ts com dados corrigidos
+
+## Fase 5 - Correções de UX (solicitado)
+- [x] Exibir mensagem específica quando inelegiível por teto de valor do veículo- [x] Remover segundo pedido de e-mail no formulário de análise (já capturado no LeadForm)

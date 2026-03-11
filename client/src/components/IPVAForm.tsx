@@ -19,23 +19,35 @@ interface FormData extends Omit<DadosDocumento, 'elegivel'> {
 interface ElegibilidadeResult {
   elegivel: boolean;
   motivo: string;
+  motivoTipo: 'teto' | 'deficiencia' | 'condutor' | 'elegivel';
   tetoAplicavel: string;
   deficienciasAceitas: string;
   observacoes: string;
 }
 
-export default function IPVAForm() {
+interface DadosLead {
+  nome: string;
+  email: string;
+  telefone: string;
+  deficiencia: string;
+}
+
+interface IPVAFormProps {
+  dadosLead?: DadosLead | null;
+}
+
+export default function IPVAForm({ dadosLead }: IPVAFormProps = {}) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     estado: "",
-    deficiencia: "",
+    deficiencia: dadosLead?.deficiencia || "",
     condutor: "",
     tipoVeiculo: "",
     valorVeiculo: "",
     laudoMedico: "",
-    nome: "",
-    email: "",
-    telefone: "",
+    nome: dadosLead?.nome || "",
+    email: dadosLead?.email || "",
+    telefone: dadosLead?.telefone || "",
   });
 
   const [elegibilidade, setElegibilidade] = useState<ElegibilidadeResult | null>(
@@ -82,6 +94,7 @@ export default function IPVAForm() {
     if (!dadosEstado) {
       setElegibilidade({
         elegivel: false,
+        motivoTipo: 'deficiencia',
         motivo: "Estado não encontrado",
         tetoAplicavel: "",
         deficienciasAceitas: "",
@@ -92,30 +105,37 @@ export default function IPVAForm() {
 
     // Validar deficiência
     const deficienciasAceitasStr = dadosEstado.deficiencias_aceitas.toLowerCase();
-    const deficienciaValida = deficiencias.some(
-      (d) =>
-        deficienciasAceitasStr.includes(d.toLowerCase()) ||
-        (d === "Autismo/TEA" &&
-          (deficienciasAceitasStr.includes("autismo") ||
-            deficienciasAceitasStr.includes("tea")))
-    );
+    const defSelecionada = formData.deficiencia.toLowerCase();
+    const deficienciaValida =
+      deficienciasAceitasStr.includes(defSelecionada) ||
+      (formData.deficiencia === "Autismo/TEA" &&
+        (deficienciasAceitasStr.includes("autismo") ||
+          deficienciasAceitasStr.includes("tea"))) ||
+      deficienciasAceitasStr.includes("todas") ||
+      deficienciasAceitasStr.includes("qualquer");
 
-    console.log("Deficiência válida?", deficienciaValida, "Deficiência selecionada:", formData.deficiencia);
-
-    // Validar se é não-condutor (campo pode ter "Sim" ou "Sim, com condições...")
+    // Validar se é não-condutor
     const aceitaNaoCondutor =
       dadosEstado.aceita_nao_condutor.toLowerCase().startsWith("sim");
 
-    if (
-      !deficienciaValida ||
-      (formData.condutor === "nao" && !aceitaNaoCondutor)
-    ) {
+    if (formData.condutor === "nao" && !aceitaNaoCondutor) {
       setElegibilidade({
         elegivel: false,
-        motivo:
-          formData.condutor === "nao" && !aceitaNaoCondutor
-            ? "Este estado não aceita não-condutores"
-            : "Esta deficiência não está coberta neste estado",
+        motivoTipo: 'condutor',
+        motivo: `${dadosEstado.nome} exige que o próprio beneficiário seja o condutor do veículo`,
+        tetoAplicavel: "",
+        deficienciasAceitas: dadosEstado.deficiencias_aceitas,
+        observacoes: dadosEstado.observacoes,
+      });
+      setStep(2);
+      return;
+    }
+
+    if (!deficienciaValida) {
+      setElegibilidade({
+        elegivel: false,
+        motivoTipo: 'deficiencia',
+        motivo: `A condição "${formData.deficiencia}" pode não estar expressamente listada em ${dadosEstado.nome}. Verifique com a SEFAZ local.`,
         tetoAplicavel: "",
         deficienciasAceitas: dadosEstado.deficiencias_aceitas,
         observacoes: dadosEstado.observacoes,
@@ -130,24 +150,23 @@ export default function IPVAForm() {
         ? dadosEstado.teto_veiculo_novo
         : dadosEstado.teto_veiculo_usado;
 
-    const tetoNumerico = parseFloat(teto.replace(/[^\d,]/g, "").replace(",", "."));
+    const semLimite = teto.toLowerCase().includes("sem limite") || teto.toLowerCase().includes("ilimitado");
+    const tetoNumerico = semLimite ? Infinity : parseFloat(teto.replace(/[^\d]/g, "")) / 100;
     const valorNumerico = parseFloat(formData.valorVeiculo);
 
-    console.log("Teto:", teto, "Teto numérico:", tetoNumerico, "Valor:", valorNumerico);
-
-    const elegivel = valorNumerico <= tetoNumerico || teto.includes("Sem limite");
+    const elegivel = semLimite || valorNumerico <= tetoNumerico;
 
     const resultado: ElegibilidadeResult = {
       elegivel,
+      motivoTipo: elegivel ? 'elegivel' : 'teto',
       motivo: elegivel
         ? "Você pode ter direito à isenção de IPVA!"
-        : `O valor do veículo (R$ ${valorNumerico.toLocaleString("pt-BR")}) ultrapassa o teto permitido (${teto})`,
+        : `Valor do veículo acima do teto permitido em ${dadosEstado.nome}`,
       tetoAplicavel: teto,
       deficienciasAceitas: dadosEstado.deficiencias_aceitas,
       observacoes: dadosEstado.observacoes,
     };
 
-    console.log("Resultado da análise:", resultado);
     setElegibilidade(resultado);
     setStep(2);
   };
@@ -410,114 +429,139 @@ export default function IPVAForm() {
       {/* Etapa 2: Resultado e Dados Pessoais */}
       {step === 2 && elegibilidade && (
         <div className="space-y-6">
-          {/* Card de Resultado */}
+          {/* Card de Resultado Principal */}
           <Card
             className={`p-8 border-2 ${
               elegibilidade.elegivel
                 ? "border-green-200 bg-green-50"
+                : elegibilidade.motivoTipo === 'teto'
+                ? "border-amber-200 bg-amber-50"
                 : "border-red-200 bg-red-50"
             }`}
           >
             <div className="flex items-start gap-4">
               {elegibilidade.elegivel ? (
-                <CheckCircle2 className="w-10 h-10 text-green-600 flex-shrink-0" />
+                <CheckCircle2 className="w-10 h-10 text-green-600 flex-shrink-0 mt-1" />
               ) : (
-                <AlertCircle className="w-10 h-10 text-red-600 flex-shrink-0" />
+                <AlertCircle className={`w-10 h-10 flex-shrink-0 mt-1 ${
+                  elegibilidade.motivoTipo === 'teto' ? 'text-amber-600' : 'text-red-600'
+                }`} />
               )}
-              <div>
+              <div className="flex-1">
                 <h3
                   className={`text-xl font-bold mb-2 ${
                     elegibilidade.elegivel
                       ? "text-green-900"
+                      : elegibilidade.motivoTipo === 'teto'
+                      ? "text-amber-900"
                       : "text-red-900"
                   }`}
                 >
                   {elegibilidade.motivo}
                 </h3>
-                {elegibilidade.tetoAplicavel && (
-                  <p className="text-sm text-gray-700">
-                    Teto aplicável: {elegibilidade.tetoAplicavel}
+
+                {/* Bloco especial para inelegibilidade por TETO */}
+                {elegibilidade.motivoTipo === 'teto' && (
+                  <div className="mt-4 space-y-3">
+                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-amber-200">
+                      <span className="text-amber-700 font-bold text-sm w-32 flex-shrink-0">Teto do estado:</span>
+                      <span className="text-gray-800 font-semibold">{elegibilidade.tetoAplicavel}</span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-amber-200">
+                      <span className="text-amber-700 font-bold text-sm w-32 flex-shrink-0">Valor informado:</span>
+                      <span className="text-gray-800 font-semibold">
+                        R$ {parseFloat(formData.valorVeiculo).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="p-3 bg-amber-100 rounded-lg border border-amber-300">
+                      <p className="text-amber-900 text-sm font-medium">
+                        💡 <strong>Dica:</strong> Verifique o valor FIPE do seu veículo. Se estiver dentro do teto, você pode ser elegível. Volte e informe o valor correto.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bloco para inelegibilidade por DEFICIÊNCIA */}
+                {elegibilidade.motivoTipo === 'deficiencia' && elegibilidade.deficienciasAceitas && (
+                  <div className="mt-4 p-3 bg-white rounded-lg border border-red-200">
+                    <p className="text-sm font-semibold text-gray-700 mb-1">Deficiências aceitas neste estado:</p>
+                    <p className="text-sm text-gray-600">{elegibilidade.deficienciasAceitas}</p>
+                  </div>
+                )}
+
+                {/* Bloco para inelegibilidade por CONDUTOR */}
+                {elegibilidade.motivoTipo === 'condutor' && (
+                  <div className="mt-4 p-3 bg-white rounded-lg border border-red-200">
+                    <p className="text-sm text-gray-700">
+                      Neste estado, o beneficiário com deficiência precisa ser o próprio condutor do veículo para ter direito à isenção.
+                    </p>
+                  </div>
+                )}
+
+                {elegibilidade.tetoAplicavel && elegibilidade.motivoTipo !== 'teto' && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Teto aplicável: <strong>{elegibilidade.tetoAplicavel}</strong>
                   </p>
                 )}
               </div>
             </div>
           </Card>
 
-          {/* Dados Pessoais */}
-          <Card className="p-8 border-2 border-blue-100">
-            <h3 className="text-xl font-bold text-blue-900 mb-6">
-              Dados Pessoais
-            </h3>
-
-            <div className="space-y-6">
-              {/* Nome */}
-              <div>
-                <Label htmlFor="nome" className="text-base font-semibold">
-                  Nome Completo
-                </Label>
-                <Input
-                  id="nome"
-                  placeholder="Seu nome completo"
-                  value={formData.nome}
-                  onChange={(e) => {
-                    setFormData({ ...formData, nome: e.target.value });
-                    setErros({ ...erros, nome: "" });
-                  }}
-                  className={`mt-2 h-12 text-base ${
-                    erros.nome ? "border-red-500" : ""
-                  }`}
-                />
-                {erros.nome && (
-                  <p className="text-red-600 text-sm mt-1">{erros.nome}</p>
-                )}
+          {/* Dados Pessoais — só exibe se não vieram do lead */}
+          {!dadosLead ? (
+            <Card className="p-8 border-2 border-blue-100">
+              <h3 className="text-xl font-bold text-blue-900 mb-6">
+                Dados Pessoais
+              </h3>
+              <div className="space-y-6">
+                <div>
+                  <Label htmlFor="nome" className="text-base font-semibold">Nome Completo</Label>
+                  <Input
+                    id="nome"
+                    placeholder="Seu nome completo"
+                    value={formData.nome}
+                    onChange={(e) => { setFormData({ ...formData, nome: e.target.value }); setErros({ ...erros, nome: "" }); }}
+                    className={`mt-2 h-12 text-base ${erros.nome ? "border-red-500" : ""}`}
+                  />
+                  {erros.nome && <p className="text-red-600 text-sm mt-1">{erros.nome}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="email" className="text-base font-semibold">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu.email@exemplo.com"
+                    value={formData.email}
+                    onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErros({ ...erros, email: "" }); }}
+                    className={`mt-2 h-12 text-base ${erros.email ? "border-red-500" : ""}`}
+                  />
+                  {erros.email && <p className="text-red-600 text-sm mt-1">{erros.email}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="telefone" className="text-base font-semibold">Telefone</Label>
+                  <Input
+                    id="telefone"
+                    placeholder="(XX) XXXXX-XXXX"
+                    value={formData.telefone}
+                    onChange={(e) => { setFormData({ ...formData, telefone: e.target.value }); setErros({ ...erros, telefone: "" }); }}
+                    className={`mt-2 h-12 text-base ${erros.telefone ? "border-red-500" : ""}`}
+                  />
+                  {erros.telefone && <p className="text-red-600 text-sm mt-1">{erros.telefone}</p>}
+                </div>
               </div>
-
-              {/* Email */}
-              <div>
-                <Label htmlFor="email" className="text-base font-semibold">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="seu.email@exemplo.com"
-                  value={formData.email}
-                  onChange={(e) => {
-                    setFormData({ ...formData, email: e.target.value });
-                    setErros({ ...erros, email: "" });
-                  }}
-                  className={`mt-2 h-12 text-base ${
-                    erros.email ? "border-red-500" : ""
-                  }`}
-                />
-                {erros.email && (
-                  <p className="text-red-600 text-sm mt-1">{erros.email}</p>
-                )}
+            </Card>
+          ) : (
+            /* Confirmação dos dados já preenchidos */
+            <Card className="p-6 border-2 border-green-100 bg-green-50">
+              <div className="flex items-center gap-3">
+                <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-green-900">Dados já registrados</p>
+                  <p className="text-sm text-green-700">{dadosLead.nome} • {dadosLead.email} • {dadosLead.telefone}</p>
+                </div>
               </div>
-
-              {/* Telefone */}
-              <div>
-                <Label htmlFor="telefone" className="text-base font-semibold">
-                  Telefone
-                </Label>
-                <Input
-                  id="telefone"
-                  placeholder="(XX) XXXXX-XXXX"
-                  value={formData.telefone}
-                  onChange={(e) => {
-                    setFormData({ ...formData, telefone: e.target.value });
-                    setErros({ ...erros, telefone: "" });
-                  }}
-                  className={`mt-2 h-12 text-base ${
-                    erros.telefone ? "border-red-500" : ""
-                  }`}
-                />
-                {erros.telefone && (
-                  <p className="text-red-600 text-sm mt-1">{erros.telefone}</p>
-                )}
-              </div>
-            </div>
-          </Card>
+            </Card>
+          )}
 
           {/* Botões de Ação */}
           <div className="flex gap-4">

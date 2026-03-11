@@ -8,8 +8,15 @@ import { CheckCircle2, ArrowRight, Shield, Users, FileText } from "lucide-react"
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
+interface LeadData {
+  nome: string;
+  email: string;
+  telefone: string;
+  deficiencia: string;
+}
+
 interface LeadFormProps {
-  onLeadCapturado: () => void;
+  onLeadCapturado: (dados: LeadData) => void;
 }
 
 const deficiencias = [
@@ -33,12 +40,12 @@ export default function LeadForm({ onLeadCapturado }: LeadFormProps) {
 
   const salvarLead = trpc.leads.criar.useMutation({
     onSuccess: () => {
-      onLeadCapturado();
+      onLeadCapturado(formData);
     },
     onError: (error: unknown) => {
       console.error("Erro ao salvar lead:", error);
       // Mesmo com erro, deixar o usuário continuar
-      onLeadCapturado();
+      onLeadCapturado(formData);
     },
   });
 
