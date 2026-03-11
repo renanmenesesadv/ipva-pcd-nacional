@@ -1,13 +1,9 @@
+"use client";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -58,6 +54,8 @@ export default function IPVAForm() {
   ];
 
   const analisarElegibilidade = () => {
+    console.log("Iniciando análise com dados:", formData);
+    
     const novosErros: Record<string, string> = {};
 
     if (!formData.estado) novosErros.estado = "Selecione um estado";
@@ -70,6 +68,7 @@ export default function IPVAForm() {
       novosErros.laudoMedico = "Indique se possui laudo";
 
     if (Object.keys(novosErros).length > 0) {
+      console.log("Erros de validação:", novosErros);
       setErros(novosErros);
       return;
     }
@@ -78,6 +77,8 @@ export default function IPVAForm() {
 
     // Buscar dados do estado
     const dadosEstado = estadosIPVAPCD[formData.estado as keyof typeof estadosIPVAPCD];
+    console.log("Dados do estado encontrados:", dadosEstado);
+    
     if (!dadosEstado) {
       setElegibilidade({
         elegivel: false,
@@ -99,6 +100,8 @@ export default function IPVAForm() {
             deficienciasAceitasStr.includes("tea")))
     );
 
+    console.log("Deficiência válida?", deficienciaValida, "Deficiência selecionada:", formData.deficiencia);
+
     // Validar se é não-condutor
     const aceitaNaoCondutor =
       formData.condutor === "nao" &&
@@ -118,6 +121,7 @@ export default function IPVAForm() {
         deficienciasAceitas: dadosEstado.deficiencias_aceitas,
         observacoes: dadosEstado.observacoes,
       });
+      setStep(2);
       return;
     }
 
@@ -130,9 +134,11 @@ export default function IPVAForm() {
     const tetoNumerico = parseFloat(teto.replace(/[^\d,]/g, "").replace(",", "."));
     const valorNumerico = parseFloat(formData.valorVeiculo);
 
+    console.log("Teto:", teto, "Teto numérico:", tetoNumerico, "Valor:", valorNumerico);
+
     const elegivel = valorNumerico <= tetoNumerico || teto.includes("Sem limite");
 
-    setElegibilidade({
+    const resultado: ElegibilidadeResult = {
       elegivel,
       motivo: elegivel
         ? "Você pode ter direito à isenção de IPVA!"
@@ -140,8 +146,10 @@ export default function IPVAForm() {
       tetoAplicavel: teto,
       deficienciasAceitas: dadosEstado.deficiencias_aceitas,
       observacoes: dadosEstado.observacoes,
-    });
+    };
 
+    console.log("Resultado da análise:", resultado);
+    setElegibilidade(resultado);
     setStep(2);
   };
 
@@ -179,23 +187,31 @@ export default function IPVAForm() {
       {/* Indicador de Progresso */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex-1">
-          <div
-            className={`h-2 rounded-full transition-all ${
-              step >= 1 ? "bg-blue-700" : "bg-gray-300"
-            }`}
-            style={{ width: step >= 1 ? "100%" : "0%" }}
-          />
-        </div>
-        <div className="mx-2 text-sm font-medium text-gray-600">
-          Etapa {step} de 2
-        </div>
-        <div className="flex-1">
-          <div
-            className={`h-2 rounded-full transition-all ${
-              step >= 2 ? "bg-green-600" : "bg-gray-300"
-            }`}
-            style={{ width: step >= 2 ? "100%" : "0%" }}
-          />
+          <div className="flex items-center">
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
+                step >= 1 ? "bg-blue-700" : "bg-gray-300"
+              }`}
+            >
+              1
+            </div>
+            <div
+              className={`flex-1 h-1 mx-2 ${
+                step >= 2 ? "bg-blue-700" : "bg-gray-300"
+              }`}
+            ></div>
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
+                step >= 2 ? "bg-blue-700" : "bg-gray-300"
+              }`}
+            >
+              2
+            </div>
+          </div>
+          <div className="flex justify-between mt-2 text-sm">
+            <span className="font-semibold text-gray-700">Elegibilidade</span>
+            <span className="font-semibold text-gray-700">Dados Pessoais</span>
+          </div>
         </div>
       </div>
 
@@ -405,11 +421,11 @@ export default function IPVAForm() {
           >
             <div className="flex items-start gap-4">
               {elegibilidade.elegivel ? (
-                <CheckCircle2 className="w-8 h-8 text-green-600 flex-shrink-0 mt-1" />
+                <CheckCircle2 className="w-10 h-10 text-green-600 flex-shrink-0" />
               ) : (
-                <AlertCircle className="w-8 h-8 text-red-600 flex-shrink-0 mt-1" />
+                <AlertCircle className="w-10 h-10 text-red-600 flex-shrink-0" />
               )}
-              <div className="flex-1">
+              <div>
                 <h3
                   className={`text-xl font-bold mb-2 ${
                     elegibilidade.elegivel
@@ -419,137 +435,108 @@ export default function IPVAForm() {
                 >
                   {elegibilidade.motivo}
                 </h3>
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <strong>Teto aplicável:</strong> {elegibilidade.tetoAplicavel}
+                {elegibilidade.tetoAplicavel && (
+                  <p className="text-sm text-gray-700">
+                    Teto aplicável: {elegibilidade.tetoAplicavel}
                   </p>
-                  <p>
-                    <strong>Deficiências aceitas:</strong>{" "}
-                    {elegibilidade.deficienciasAceitas}
-                  </p>
-                  {elegibilidade.observacoes && (
-                    <p>
-                      <strong>Observações:</strong> {elegibilidade.observacoes}
-                    </p>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           </Card>
 
-          {elegibilidade.elegivel && (
-            <>
-              {/* Formulário de Dados Pessoais */}
-              <Card className="p-8 border-2 border-green-100">
-                <h2 className="text-2xl font-bold text-green-900 mb-6">
-                  Seus Dados Pessoais
-                </h2>
+          {/* Dados Pessoais */}
+          <Card className="p-8 border-2 border-blue-100">
+            <h3 className="text-xl font-bold text-blue-900 mb-6">
+              Dados Pessoais
+            </h3>
 
-                <div className="space-y-6">
-                  <div>
-                    <Label htmlFor="nome" className="text-base font-semibold">
-                      Nome Completo
-                    </Label>
-                    <Input
-                      id="nome"
-                      placeholder="Seu nome completo"
-                      value={formData.nome}
-                      onChange={(e) => {
-                        setFormData({ ...formData, nome: e.target.value });
-                        setErros({ ...erros, nome: "" });
-                      }}
-                      className={`mt-2 h-12 text-base ${
-                        erros.nome ? "border-red-500" : ""
-                      }`}
-                    />
-                    {erros.nome && (
-                      <p className="text-red-600 text-sm mt-1">{erros.nome}</p>
-                    )}
-                  </div>
+            <div className="space-y-6">
+              {/* Nome */}
+              <div>
+                <Label htmlFor="nome" className="text-base font-semibold">
+                  Nome Completo
+                </Label>
+                <Input
+                  id="nome"
+                  placeholder="Seu nome completo"
+                  value={formData.nome}
+                  onChange={(e) => {
+                    setFormData({ ...formData, nome: e.target.value });
+                    setErros({ ...erros, nome: "" });
+                  }}
+                  className={`mt-2 h-12 text-base ${
+                    erros.nome ? "border-red-500" : ""
+                  }`}
+                />
+                {erros.nome && (
+                  <p className="text-red-600 text-sm mt-1">{erros.nome}</p>
+                )}
+              </div>
 
-                  <div>
-                    <Label htmlFor="email" className="text-base font-semibold">
-                      Email
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu.email@example.com"
-                      value={formData.email}
-                      onChange={(e) => {
-                        setFormData({ ...formData, email: e.target.value });
-                        setErros({ ...erros, email: "" });
-                      }}
-                      className={`mt-2 h-12 text-base ${
-                        erros.email ? "border-red-500" : ""
-                      }`}
-                    />
-                    {erros.email && (
-                      <p className="text-red-600 text-sm mt-1">{erros.email}</p>
-                    )}
-                  </div>
+              {/* Email */}
+              <div>
+                <Label htmlFor="email" className="text-base font-semibold">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu.email@exemplo.com"
+                  value={formData.email}
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    setErros({ ...erros, email: "" });
+                  }}
+                  className={`mt-2 h-12 text-base ${
+                    erros.email ? "border-red-500" : ""
+                  }`}
+                />
+                {erros.email && (
+                  <p className="text-red-600 text-sm mt-1">{erros.email}</p>
+                )}
+              </div>
 
-                  <div>
-                    <Label htmlFor="telefone" className="text-base font-semibold">
-                      Telefone
-                    </Label>
-                    <Input
-                      id="telefone"
-                      placeholder="(XX) XXXXX-XXXX"
-                      value={formData.telefone}
-                      onChange={(e) => {
-                        setFormData({ ...formData, telefone: e.target.value });
-                        setErros({ ...erros, telefone: "" });
-                      }}
-                      className={`mt-2 h-12 text-base ${
-                        erros.telefone ? "border-red-500" : ""
-                      }`}
-                    />
-                    {erros.telefone && (
-                      <p className="text-red-600 text-sm mt-1">{erros.telefone}</p>
-                    )}
-                  </div>
+              {/* Telefone */}
+              <div>
+                <Label htmlFor="telefone" className="text-base font-semibold">
+                  Telefone
+                </Label>
+                <Input
+                  id="telefone"
+                  placeholder="(XX) XXXXX-XXXX"
+                  value={formData.telefone}
+                  onChange={(e) => {
+                    setFormData({ ...formData, telefone: e.target.value });
+                    setErros({ ...erros, telefone: "" });
+                  }}
+                  className={`mt-2 h-12 text-base ${
+                    erros.telefone ? "border-red-500" : ""
+                  }`}
+                />
+                {erros.telefone && (
+                  <p className="text-red-600 text-sm mt-1">{erros.telefone}</p>
+                )}
+              </div>
+            </div>
+          </Card>
 
-                  <div className="flex items-center space-x-2 p-4 bg-blue-50 rounded-lg">
-                    <Checkbox id="termos" />
-                    <Label
-                      htmlFor="termos"
-                      className="font-normal cursor-pointer text-sm"
-                    >
-                      Concordo em receber informações sobre meu pedido de isenção
-                    </Label>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <Button
-                      onClick={() => setStep(1)}
-                      variant="outline"
-                      className="flex-1 h-12 text-base font-semibold"
-                    >
-                      Voltar
-                    </Button>
-                    <Button
-                      onClick={handleGerarDocumento}
-                      className="flex-1 h-12 text-base font-semibold bg-green-600 hover:bg-green-700 text-white"
-                    >
-                      Gerar Documento
-                      <ChevronRight className="ml-2 w-5 h-5" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </>
-          )}
-
-          {!elegibilidade.elegivel && (
+          {/* Botões de Ação */}
+          <div className="flex gap-4">
             <Button
               onClick={() => setStep(1)}
               variant="outline"
-              className="w-full h-12 text-base font-semibold"
+              className="flex-1 h-12 text-base font-semibold"
             >
-              Voltar e Tentar Novamente
+              ← Voltar
             </Button>
-          )}
+            <Button
+              onClick={handleGerarDocumento}
+              className="flex-1 h-12 text-base font-semibold bg-green-700 hover:bg-green-800 text-white"
+            >
+              Gerar Relatório
+              <ChevronRight className="ml-2 w-5 h-5" />
+            </Button>
+          </div>
         </div>
       )}
     </div>
