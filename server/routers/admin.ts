@@ -1,0 +1,208 @@
+import { z } from "zod";
+import { protectedProcedure, router } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
+import { getDb } from "../db";
+import { leads } from "../../drizzle/schema";
+import { eq, desc, like, and, or } from "drizzle-orm";
+
+// Middleware para verificar se é admin
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Acesso restrito a administradores" });
+  }
+  return next({ ctx });
+});
+
+export const adminRouter = router({
+  // Listar todos os leads com filtros
+  listarLeads: adminProcedure
+    .input(
+      z.object({
+        pagina: z.number().default(1),
+        porPagina: z.number().default(20),
+        busca: z.string().optional(),
+        deficiencia: z.string().optional(),
+        estado: z.string().optional(),
+        elegivel: z.boolean().optional(),
+        contatado: z.boolean().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const offset = (input.pagina - 1) * input.porPagina;
+
+      const conditions = [];
+
+      if (input.busca) {
+        conditions.push(
+          or(
+            like(leads.nome, `%${input.busca}%`),
+            like(leads.email, `%${input.busca}%`),
+            like(leads.telefone, `%${input.busca}%`)
+          )
+        );
+      }
+      if (input.deficiencia) {
+        conditions.push(like(leads.deficiencia, `%${input.deficiencia}%`));
+      }
+      if (input.estado) {
+        conditions.push(eq(leads.estado, input.estado));
+      }
+      if (input.elegivel !== undefined) {
+        conditions.push(eq(leads.elegivel, input.elegivel));
+      }
+      if (input.contatado !== undefined) {
+        conditions.push(eq(leads.contatado, input.contatado));
+      }
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const [allLeads, totalCount] = await Promise.all([
+        db
+          .select()
+          .from(leads)
+          .where(whereClause)
+          .orderBy(desc(leads.createdAt))
+          .limit(input.porPagina)
+          .offset(offset),
+        db.select({ id: leads.id }).from(leads).where(whereClause),
+      ]);
+
+      return {
+        leads: allLeads,
+        total: totalCount.length,
+        paginas: Math.ceil(totalCount.length / input.porPagina),
+        paginaAtual: input.pagina,
+      };
+    }),
+
+  // Estatísticas para o dashboard
+  estatisticas: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const todos = await db.select().from(leads).orderBy(desc(leads.createdAt));
+
+    const total = todos.length;
+    const elegiveis = todos.filter((l) => l.elegivel).length;
+    const naoContatados = todos.filter((l) => !l.contatado).length;
+
+    // Agrupar por deficiência
+    const porDeficiencia: Record<string, number> = {};
+    todos.forEach((l) => {
+      if (l.deficiencia) {
+        porDeficiencia[l.deficiencia] = (porDeficiencia[l.deficiencia] || 0) + 1;
+      }
+    });
+
+    // Agrupar por estado
+    const porEstado: Record<string, number> = {};
+    todos.forEach((l) => {
+      if (l.estado) {
+        porEstado[l.estado] = (porEstado[l.estado] || 0) + 1;
+      }
+    });
+
+    // Leads dos últimos 7 dias
+    const seteDiasAtras = new Date();
+    seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+    const recentes = todos.filter((l) => new Date(l.createdAt) >= seteDiasAtras).length;
+
+    return {
+      total,
+      elegiveis,
+      naoContatados,
+      recentes,
+      porDeficiencia,
+      porEstado,
+      ultimosLeads: todos.slice(0, 5),
+    };
+  }),
+
+  // Marcar lead como contatado
+  marcarContatado: adminProcedure
+    .input(z.object({ id: z.number(), contatado: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await db
+        .update(leads)
+        .set({ contatado: input.contatado })
+        .where(eq(leads.id, input.id));
+
+      return { success: true };
+    }),
+
+  // Adicionar observação
+  adicionarObservacao: adminProcedure
+    .input(z.object({ id: z.number(), observacoes: z.string() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await db
+        .update(leads)
+        .set({ observacoes: input.observacoes })
+        .where(eq(leads.id, input.id));
+
+      return { success: true };
+    }),
+
+  // Exportar leads como CSV
+  exportarCSV: adminProcedure
+    .input(
+      z.object({
+        deficiencia: z.string().optional(),
+        estado: z.string().optional(),
+        elegivel: z.boolean().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const conditions = [];
+      if (input.deficiencia) conditions.push(like(leads.deficiencia, `%${input.deficiencia}%`));
+      if (input.estado) conditions.push(eq(leads.estado, input.estado));
+      if (input.elegivel !== undefined) conditions.push(eq(leads.elegivel, input.elegivel));
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const todos = await db
+        .select()
+        .from(leads)
+        .where(whereClause)
+        .orderBy(desc(leads.createdAt));
+
+      // Gerar CSV
+      const cabecalho = [
+        "ID", "Nome", "Email", "WhatsApp", "Deficiência", "Estado",
+        "Condutor", "Tipo Veículo", "Valor Veículo", "Laudo Médico",
+        "Elegível", "Contatado", "Observações", "Data Cadastro"
+      ].join(",");
+
+      const linhas = todos.map((l) =>
+        [
+          l.id,
+          `"${l.nome}"`,
+          `"${l.email}"`,
+          `"${l.telefone}"`,
+          `"${l.deficiencia}"`,
+          `"${l.estadoNome || l.estado}"`,
+          `"${l.condutor}"`,
+          `"${l.tipoVeiculo}"`,
+          `"${l.valorVeiculo}"`,
+          `"${l.laudoMedico}"`,
+          l.elegivel ? "Sim" : "Não",
+          l.contatado ? "Sim" : "Não",
+          `"${l.observacoes || ""}"`,
+          `"${new Date(l.createdAt).toLocaleDateString("pt-BR")}"`,
+        ].join(",")
+      );
+
+      return { csv: [cabecalho, ...linhas].join("\n"), total: todos.length };
+    }),
+});
