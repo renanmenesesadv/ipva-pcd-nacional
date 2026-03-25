@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ativar Acesso | ZERO IPVA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body class="auth-body">
+
+  <div class="auth-container auth-container-centered">
+    <div class="auth-card">
+      <a href="index.html" class="logo auth-logo auth-logo-centered">
+        <span class="logo-icon"><i class="fas fa-car"></i></span>
+        <div class="logo-text">
+          <span class="logo-name">ZERO IPVA</span>
+          <span class="logo-sub">Plataforma de Isenção</span>
+        </div>
+      </a>
+
+      <div class="activation-icon">
+        <i class="fas fa-check-circle"></i>
+      </div>
+
+      <h1>Pagamento confirmado!</h1>
+      <p class="auth-form-subtitle">Crie suas credenciais de acesso para entrar na plataforma e gerar seus relatórios.</p>
+
+      <div class="auth-alert auth-alert-success" id="alertSuccess" style="display: none;"></div>
+      <div class="auth-alert auth-alert-error" id="alertError" style="display: none;"></div>
+
+      <form id="ativarForm" class="auth-form" novalidate>
+        <div class="form-group">
+          <label for="nome">Nome completo</label>
+          <div class="input-icon">
+            <i class="fas fa-user"></i>
+            <input type="text" id="nome" name="nome" placeholder="Seu nome completo" required autocomplete="name">
+          </div>
+          <span class="form-error" id="erroNome"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="email">E-mail usado na compra</label>
+          <div class="input-icon">
+            <i class="fas fa-envelope"></i>
+            <input type="email" id="email" name="email" placeholder="seu@email.com" required autocomplete="email">
+          </div>
+          <span class="form-error" id="erroEmail"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="senha">Crie uma senha de acesso</label>
+          <div class="input-icon">
+            <i class="fas fa-lock"></i>
+            <input type="password" id="senha" name="senha" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
+            <button type="button" class="toggle-password" aria-label="Mostrar senha">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          <span class="form-error" id="erroSenha"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmarSenha">Confirme a senha</label>
+          <div class="input-icon">
+            <i class="fas fa-lock"></i>
+            <input type="password" id="confirmarSenha" name="confirmarSenha" placeholder="Repita a senha" required autocomplete="new-password">
+          </div>
+          <span class="form-error" id="erroConfirmar"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-full">
+          <i class="fas fa-unlock"></i> Ativar meu acesso
+        </button>
+      </form>
+
+      <div class="auth-divider">
+        <span>ou</span>
+      </div>
+
+      <p class="auth-switch">
+        Já ativou sua conta? <a href="login.html">Faça login</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    // Pre-fill email from Kiwify URL params if available
+    const params = new URLSearchParams(window.location.search);
+    const emailParam = params.get('email') || params.get('buyer_email') || '';
+    const nomeParam = params.get('name') || params.get('buyer_name') || '';
+
+    if (emailParam) document.getElementById('email').value = decodeURIComponent(emailParam);
+    if (nomeParam) document.getElementById('nome').value = decodeURIComponent(nomeParam);
+
+    // Detect plan from URL
+    const planoParam = params.get('plano') || 'anual';
+
+    document.getElementById('ativarForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const nome = document.getElementById('nome').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value;
+      const confirmar = document.getElementById('confirmarSenha').value;
+
+      // Clear errors
+      document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+      document.querySelectorAll('.input-icon').forEach(el => el.classList.remove('input-error'));
+      document.getElementById('alertError').style.display = 'none';
+
+      let hasError = false;
+
+      if (!nome || nome.length < 3) {
+        showFieldError('erroNome', 'nome', 'Informe seu nome completo');
+        hasError = true;
+      }
+
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showFieldError('erroEmail', 'email', 'Informe o e-mail usado na compra');
+        hasError = true;
+      }
+
+      if (!senha || senha.length < 6) {
+        showFieldError('erroSenha', 'senha', 'A senha deve ter pelo menos 6 caracteres');
+        hasError = true;
+      }
+
+      if (senha !== confirmar) {
+        showFieldError('erroConfirmar', 'confirmarSenha', 'As senhas não coincidem');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      const users = JSON.parse(localStorage.getItem('ipva_users') || '[]');
+
+      // Check if already has an account
+      const existing = users.find(u => u.email === email);
+      if (existing) {
+        // Activate existing account
+        existing.status = 'ativo';
+        existing.senha = senha;
+        existing.nome = nome;
+        existing.pagamentoEm = new Date().toISOString();
+        const expiry = new Date();
+        expiry.setFullYear(expiry.getFullYear() + 1);
+        existing.expiraEm = expiry.toISOString();
+        localStorage.setItem('ipva_users', JSON.stringify(users));
+        autoLogin(existing);
+        return;
+      }
+
+      // Create new active account
+      const now = new Date();
+      const expiry = new Date(now);
+      expiry.setFullYear(expiry.getFullYear() + 1);
+
+      const user = {
+        id: Date.now().toString(),
+        nome,
+        email,
+        telefone: '',
+        senha,
+        plano: planoParam,
+        status: 'ativo',
+        criadoEm: now.toISOString(),
+        pagamentoEm: now.toISOString(),
+        expiraEm: expiry.toISOString()
+      };
+
+      users.push(user);
+      localStorage.setItem('ipva_users', JSON.stringify(users));
+      autoLogin(user);
+    });
+
+    function autoLogin(user) {
+      const session = {
+        userId: user.id,
+        nome: user.nome,
+        email: user.email,
+        plano: user.plano,
+        expiraEm: user.expiraEm,
+        loginEm: new Date().toISOString()
+      };
+      localStorage.setItem('ipva_session', JSON.stringify(session));
+      localStorage.removeItem('ipva_pending_user');
+      window.location.href = 'plataforma.html?bemvindo=1';
+    }
+
+    function showFieldError(errorId, inputId, message) {
+      document.getElementById(errorId).textContent = message;
+      document.getElementById(inputId).closest('.input-icon').classList.add('input-error');
+    }
+  </script>
+</body>
+</html>

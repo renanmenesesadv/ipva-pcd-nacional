@@ -130,8 +130,22 @@
       }
 
       if (user.status === 'pendente') {
-        showAlert('Seu pagamento ainda não foi confirmado. Conclua o pagamento para acessar.', 'warning');
-        return;
+        // If coming from Kiwify payment, activate automatically
+        if (params.get('pagamento') === 'ok') {
+          const now = new Date();
+          const expiry = new Date(now);
+          expiry.setFullYear(expiry.getFullYear() + 1);
+          user.status = 'ativo';
+          user.pagamentoEm = now.toISOString();
+          user.expiraEm = expiry.toISOString();
+          const allUsers = JSON.parse(localStorage.getItem('ipva_users') || '[]');
+          const idx = allUsers.findIndex(u => u.id === user.id);
+          if (idx !== -1) allUsers[idx] = user;
+          localStorage.setItem('ipva_users', JSON.stringify(allUsers));
+        } else {
+          showAlert('Seu pagamento ainda não foi confirmado. Conclua o pagamento para acessar.', 'warning');
+          return;
+        }
       }
 
       if (user.status === 'expirado') {
