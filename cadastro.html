@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar Conta | ZERO IPVA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body class="auth-body">
+
+  <div class="auth-container">
+    <div class="auth-left">
+      <a href="index.html" class="logo auth-logo">
+        <span class="logo-icon"><i class="fas fa-car"></i></span>
+        <div class="logo-text">
+          <span class="logo-name">ZERO IPVA</span>
+          <span class="logo-sub">Plataforma de Isenção</span>
+        </div>
+      </a>
+
+      <div class="auth-left-content">
+        <h2>Falta pouco para garantir sua isenção de IPVA</h2>
+        <p>Crie sua conta e, após o pagamento, tenha acesso imediato a relatórios completos para qualquer estado.</p>
+
+        <div class="auth-benefits">
+          <div class="auth-benefit">
+            <i class="fas fa-check-circle"></i>
+            <span>Relatórios ilimitados por 12 meses</span>
+          </div>
+          <div class="auth-benefit">
+            <i class="fas fa-check-circle"></i>
+            <span>Todos os 27 estados cobertos</span>
+          </div>
+          <div class="auth-benefit">
+            <i class="fas fa-check-circle"></i>
+            <span>Documentação + passo a passo + link SEFAZ</span>
+          </div>
+          <div class="auth-benefit">
+            <i class="fas fa-check-circle"></i>
+            <span>Guia de restituição retroativa</span>
+          </div>
+          <div class="auth-benefit">
+            <i class="fas fa-check-circle"></i>
+            <span>Garantia de 7 dias</span>
+          </div>
+        </div>
+
+        <div class="auth-price-box">
+          <span class="auth-price-label">Plano selecionado</span>
+          <div class="auth-price-row">
+            <span class="auth-plan-name" id="planName">Plano Anual</span>
+            <span class="auth-plan-price" id="planPrice">R$ 37</span>
+          </div>
+          <span class="auth-price-note">Pagamento único · Acesso por 12 meses</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-right">
+      <div class="auth-form-wrapper">
+        <h1>Crie sua conta</h1>
+        <p class="auth-form-subtitle">Preencha seus dados para continuar ao pagamento</p>
+
+        <form id="cadastroForm" class="auth-form" novalidate>
+          <div class="form-group">
+            <label for="nome">Nome completo</label>
+            <div class="input-icon">
+              <i class="fas fa-user"></i>
+              <input type="text" id="nome" name="nome" placeholder="Seu nome completo" required autocomplete="name">
+            </div>
+            <span class="form-error" id="erroNome"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="email">E-mail</label>
+            <div class="input-icon">
+              <i class="fas fa-envelope"></i>
+              <input type="email" id="email" name="email" placeholder="seu@email.com" required autocomplete="email">
+            </div>
+            <span class="form-error" id="erroEmail"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="telefone">WhatsApp (opcional)</label>
+            <div class="input-icon">
+              <i class="fab fa-whatsapp"></i>
+              <input type="tel" id="telefone" name="telefone" placeholder="(00) 00000-0000" autocomplete="tel">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="senha">Crie uma senha</label>
+            <div class="input-icon">
+              <i class="fas fa-lock"></i>
+              <input type="password" id="senha" name="senha" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password">
+              <button type="button" class="toggle-password" aria-label="Mostrar senha">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <span class="form-error" id="erroSenha"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmarSenha">Confirme a senha</label>
+            <div class="input-icon">
+              <i class="fas fa-lock"></i>
+              <input type="password" id="confirmarSenha" name="confirmarSenha" placeholder="Repita a senha" required autocomplete="new-password">
+            </div>
+            <span class="form-error" id="erroConfirmar"></span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg btn-full" id="btnCadastro">
+            <i class="fas fa-arrow-right"></i> Continuar para o pagamento
+          </button>
+
+          <p class="auth-terms">
+            Ao criar sua conta, você concorda com os
+            <a href="#">Termos de Uso</a> e a
+            <a href="#">Política de Privacidade</a>.
+          </p>
+        </form>
+
+        <div class="auth-divider">
+          <span>ou</span>
+        </div>
+
+        <p class="auth-switch">
+          Já tem uma conta? <a href="login.html">Faça login</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    // Set plan from URL params
+    const params = new URLSearchParams(window.location.search);
+    const plano = params.get('plano') || 'anual';
+
+    const planos = {
+      avulso: { nome: 'Relatório Avulso', preco: 'R$ 17', nota: 'Pagamento único · 1 relatório' },
+      anual: { nome: 'Plano Anual', preco: 'R$ 37', nota: 'Pagamento único · Acesso por 12 meses' },
+      consultoria: { nome: 'Consultoria Jurídica', preco: 'R$ 297', nota: 'Pagamento único · Com acompanhamento' }
+    };
+
+    const selected = planos[plano] || planos.anual;
+    document.getElementById('planName').textContent = selected.nome;
+    document.getElementById('planPrice').textContent = selected.preco;
+    document.querySelector('.auth-price-note').textContent = selected.nota;
+
+    // Form submission
+    document.getElementById('cadastroForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const nome = document.getElementById('nome').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const telefone = document.getElementById('telefone').value.trim();
+      const senha = document.getElementById('senha').value;
+      const confirmar = document.getElementById('confirmarSenha').value;
+
+      // Clear errors
+      document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+      document.querySelectorAll('.input-icon').forEach(el => el.classList.remove('input-error'));
+
+      let hasError = false;
+
+      if (!nome || nome.length < 3) {
+        showError('erroNome', 'nome', 'Informe seu nome completo');
+        hasError = true;
+      }
+
+      if (!email || !isValidEmail(email)) {
+        showError('erroEmail', 'email', 'Informe um e-mail válido');
+        hasError = true;
+      }
+
+      if (!senha || senha.length < 6) {
+        showError('erroSenha', 'senha', 'A senha deve ter pelo menos 6 caracteres');
+        hasError = true;
+      }
+
+      if (senha !== confirmar) {
+        showError('erroConfirmar', 'confirmarSenha', 'As senhas não coincidem');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      // Check if email already exists
+      const users = JSON.parse(localStorage.getItem('ipva_users') || '[]');
+      if (users.find(u => u.email === email)) {
+        showError('erroEmail', 'email', 'Este e-mail já está cadastrado');
+        return;
+      }
+
+      // Save user (pending payment)
+      const user = {
+        id: Date.now().toString(),
+        nome,
+        email,
+        telefone,
+        senha, // TODO: In production, NEVER store plain text passwords. Use a backend with proper hashing.
+        plano,
+        status: 'pendente', // pendente | ativo | expirado
+        criadoEm: new Date().toISOString(),
+        pagamentoEm: null,
+        expiraEm: null
+      };
+
+      users.push(user);
+      localStorage.setItem('ipva_users', JSON.stringify(users));
+
+      // Store pending user for checkout redirect
+      localStorage.setItem('ipva_pending_user', JSON.stringify(user));
+
+      // Redirect to checkout page
+      window.location.href = 'checkout.html?plano=' + plano;
+    });
+
+    function showError(errorId, inputId, message) {
+      document.getElementById(errorId).textContent = message;
+      document.getElementById(inputId).closest('.input-icon').classList.add('input-error');
+    }
+
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+  </script>
+</body>
+</html>

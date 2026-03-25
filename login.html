@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | ZERO IPVA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body class="auth-body">
+
+  <div class="auth-container auth-container-centered">
+    <div class="auth-card">
+      <a href="index.html" class="logo auth-logo auth-logo-centered">
+        <span class="logo-icon"><i class="fas fa-car"></i></span>
+        <div class="logo-text">
+          <span class="logo-name">ZERO IPVA</span>
+          <span class="logo-sub">Plataforma de Isenção</span>
+        </div>
+      </a>
+
+      <h1>Acesse sua conta</h1>
+      <p class="auth-form-subtitle">Entre para gerar seus relatórios de isenção</p>
+
+      <div class="auth-alert" id="authAlert" style="display: none;"></div>
+
+      <form id="loginForm" class="auth-form" novalidate>
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <div class="input-icon">
+            <i class="fas fa-envelope"></i>
+            <input type="email" id="email" name="email" placeholder="seu@email.com" required autocomplete="email">
+          </div>
+          <span class="form-error" id="erroEmail"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="senha">Senha</label>
+          <div class="input-icon">
+            <i class="fas fa-lock"></i>
+            <input type="password" id="senha" name="senha" placeholder="Sua senha" required autocomplete="current-password">
+            <button type="button" class="toggle-password" aria-label="Mostrar senha">
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+          <span class="form-error" id="erroSenha"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg btn-full">
+          <i class="fas fa-sign-in-alt"></i> Entrar
+        </button>
+      </form>
+
+      <div class="auth-divider">
+        <span>ou</span>
+      </div>
+
+      <p class="auth-switch">
+        Não tem conta? <a href="cadastro.html">Crie agora</a>
+      </p>
+
+      <a href="index.html" class="auth-back">
+        <i class="fas fa-arrow-left"></i> Voltar ao site
+      </a>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    // Show alert if redirected after registration
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('cadastro') === 'ok') {
+      showAlert('Conta criada com sucesso! Faça login para acessar.', 'success');
+    }
+    if (params.get('pagamento') === 'ok') {
+      showAlert('Pagamento confirmado! Faça login para acessar a plataforma.', 'success');
+    }
+    if (params.get('acesso') === 'negado') {
+      showAlert('Você precisa fazer login para acessar a plataforma.', 'warning');
+    }
+    if (params.get('sessao') === 'expirada') {
+      showAlert('Sua sessão expirou. Faça login novamente.', 'warning');
+    }
+
+    function showAlert(message, type) {
+      const alert = document.getElementById('authAlert');
+      alert.textContent = message;
+      alert.className = 'auth-alert auth-alert-' + type;
+      alert.style.display = 'block';
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const senha = document.getElementById('senha').value;
+
+      // Clear errors
+      document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+      document.querySelectorAll('.input-icon').forEach(el => el.classList.remove('input-error'));
+      document.getElementById('authAlert').style.display = 'none';
+
+      let hasError = false;
+
+      if (!email) {
+        document.getElementById('erroEmail').textContent = 'Informe seu e-mail';
+        document.getElementById('email').closest('.input-icon').classList.add('input-error');
+        hasError = true;
+      }
+
+      if (!senha) {
+        document.getElementById('erroSenha').textContent = 'Informe sua senha';
+        document.getElementById('senha').closest('.input-icon').classList.add('input-error');
+        hasError = true;
+      }
+
+      if (hasError) return;
+
+      // Find user
+      const users = JSON.parse(localStorage.getItem('ipva_users') || '[]');
+      const user = users.find(u => u.email === email && u.senha === senha);
+
+      if (!user) {
+        showAlert('E-mail ou senha incorretos.', 'error');
+        return;
+      }
+
+      if (user.status === 'pendente') {
+        showAlert('Seu pagamento ainda não foi confirmado. Conclua o pagamento para acessar.', 'warning');
+        return;
+      }
+
+      if (user.status === 'expirado') {
+        showAlert('Seu acesso expirou. Renove seu plano para continuar usando a plataforma.', 'warning');
+        return;
+      }
+
+      // Set session
+      const session = {
+        userId: user.id,
+        nome: user.nome,
+        email: user.email,
+        plano: user.plano,
+        expiraEm: user.expiraEm,
+        loginEm: new Date().toISOString()
+      };
+      localStorage.setItem('ipva_session', JSON.stringify(session));
+
+      // Redirect to platform
+      window.location.href = 'plataforma.html';
+    });
+  </script>
+</body>
+</html>

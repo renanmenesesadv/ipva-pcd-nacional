@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pagamento | ZERO IPVA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body class="auth-body">
+
+  <div class="auth-container auth-container-centered">
+    <div class="auth-card checkout-card">
+      <a href="index.html" class="logo auth-logo auth-logo-centered">
+        <span class="logo-icon"><i class="fas fa-car"></i></span>
+        <div class="logo-text">
+          <span class="logo-name">ZERO IPVA</span>
+          <span class="logo-sub">Plataforma de Isenção</span>
+        </div>
+      </a>
+
+      <div class="checkout-icon">
+        <i class="fas fa-lock"></i>
+      </div>
+
+      <h1>Finalize seu pagamento</h1>
+      <p class="auth-form-subtitle">Seu cadastro foi realizado. Agora conclua o pagamento para liberar o acesso.</p>
+
+      <div class="checkout-summary">
+        <div class="checkout-plan">
+          <span class="checkout-plan-name" id="checkoutPlanName">Plano Anual</span>
+          <span class="checkout-plan-price" id="checkoutPlanPrice">R$ 37</span>
+        </div>
+        <div class="checkout-details">
+          <div class="checkout-detail">
+            <i class="fas fa-check"></i>
+            <span id="checkoutDetail">Relatórios ilimitados por 12 meses</span>
+          </div>
+          <div class="checkout-detail">
+            <i class="fas fa-shield-alt"></i>
+            <span>Garantia incondicional de 7 dias</span>
+          </div>
+          <div class="checkout-detail">
+            <i class="fas fa-bolt"></i>
+            <span>Acesso imediato após pagamento</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="checkout-user-info" id="checkoutUserInfo">
+        <p><i class="fas fa-user"></i> <span id="checkoutUserName"></span></p>
+        <p><i class="fas fa-envelope"></i> <span id="checkoutUserEmail"></span></p>
+      </div>
+
+      <a href="#" class="btn btn-primary btn-lg btn-full" id="btnPagar">
+        <i class="fas fa-credit-card"></i> Pagar agora
+      </a>
+
+      <div class="checkout-methods">
+        <span><i class="fas fa-credit-card"></i> Cartão</span>
+        <span><i class="fas fa-qrcode"></i> Pix</span>
+        <span><i class="fas fa-barcode"></i> Boleto</span>
+      </div>
+
+      <p class="checkout-secure">
+        <i class="fas fa-lock"></i> Pagamento 100% seguro · Processado por plataforma certificada
+      </p>
+
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const plano = params.get('plano') || 'anual';
+
+    const planos = {
+      avulso: { nome: 'Relatório Avulso', preco: 'R$ 17', detalhe: '1 relatório completo' },
+      anual: { nome: 'Plano Anual', preco: 'R$ 37', detalhe: 'Relatórios ilimitados por 12 meses' },
+      consultoria: { nome: 'Consultoria Jurídica', preco: 'R$ 297', detalhe: 'Relatórios + consultoria com advogado' }
+    };
+
+    const selected = planos[plano] || planos.anual;
+    document.getElementById('checkoutPlanName').textContent = selected.nome;
+    document.getElementById('checkoutPlanPrice').textContent = selected.preco;
+    document.getElementById('checkoutDetail').textContent = selected.detalhe;
+
+    // Show pending user info
+    const pendingUser = JSON.parse(localStorage.getItem('ipva_pending_user') || 'null');
+    if (pendingUser) {
+      document.getElementById('checkoutUserName').textContent = pendingUser.nome;
+      document.getElementById('checkoutUserEmail').textContent = pendingUser.email;
+    } else {
+      document.getElementById('checkoutUserInfo').style.display = 'none';
+    }
+
+    // Kiwify checkout URLs
+    const kiwifyLinks = {
+      avulso: 'https://pay.kiwify.com.br/K9D0GGL',
+      anual: 'https://pay.kiwify.com.br/LvHpEUd',
+      consultoria: 'https://pay.kiwify.com.br/CDOzVHV'
+    };
+
+    // Payment button — redirect to Kiwify
+    document.getElementById('btnPagar').addEventListener('click', function(e) {
+      e.preventDefault();
+
+      const checkoutUrl = kiwifyLinks[plano] || kiwifyLinks.anual;
+
+      // Pass user email to pre-fill Kiwify checkout
+      if (pendingUser && pendingUser.email) {
+        window.location.href = checkoutUrl + '?email=' + encodeURIComponent(pendingUser.email) + '&name=' + encodeURIComponent(pendingUser.nome || '');
+      } else {
+        window.location.href = checkoutUrl;
+      }
+    });
+  </script>
+</body>
+</html>

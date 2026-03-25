@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plataforma | ZERO IPVA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="plataforma.css">
+</head>
+<body class="platform-body">
+
+  <!-- Platform Header -->
+  <header class="platform-header">
+    <div class="container platform-header-inner">
+      <a href="plataforma.html" class="logo">
+        <span class="logo-icon"><i class="fas fa-car"></i></span>
+        <div class="logo-text">
+          <span class="logo-name">ZERO IPVA</span>
+          <span class="logo-sub">Plataforma</span>
+        </div>
+      </a>
+      <div class="platform-user">
+        <div class="platform-user-info">
+          <span class="platform-user-name" id="userName"></span>
+          <span class="platform-user-plan" id="userPlan"></span>
+        </div>
+        <button class="btn-logout" id="btnLogout" title="Sair">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="platform-main">
+    <div class="container">
+
+      <!-- Welcome Banner -->
+      <div class="welcome-banner" id="welcomeBanner" style="display: none;">
+        <div class="welcome-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="welcome-text">
+          <h2>Pagamento confirmado! Bem-vindo(a) à plataforma.</h2>
+          <p>Seu acesso está ativo. Gere seu primeiro relatório abaixo.</p>
+        </div>
+        <button class="welcome-close" id="closeWelcome"><i class="fas fa-times"></i></button>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="platform-stats">
+        <div class="platform-stat-card">
+          <div class="platform-stat-icon"><i class="fas fa-file-alt"></i></div>
+          <div>
+            <span class="platform-stat-value" id="statRelatorios">0</span>
+            <span class="platform-stat-label">Relatórios gerados</span>
+          </div>
+        </div>
+        <div class="platform-stat-card">
+          <div class="platform-stat-icon"><i class="fas fa-calendar-alt"></i></div>
+          <div>
+            <span class="platform-stat-value" id="statExpira">-</span>
+            <span class="platform-stat-label">Acesso até</span>
+          </div>
+        </div>
+        <div class="platform-stat-card">
+          <div class="platform-stat-icon"><i class="fas fa-star"></i></div>
+          <div>
+            <span class="platform-stat-value" id="statPlano">-</span>
+            <span class="platform-stat-label">Seu plano</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Generator -->
+      <div class="platform-section">
+        <div class="platform-section-header">
+          <h2><i class="fas fa-file-alt"></i> Gerar Novo Relatório</h2>
+          <p>Selecione o estado e a condição de saúde para gerar o relatório completo</p>
+        </div>
+
+        <div class="generator-form" id="generatorForm">
+          <div class="generator-row">
+            <div class="generator-field">
+              <label for="genEstado">Estado</label>
+              <select id="genEstado" class="gen-select" required>
+                <option value="">Selecione o estado</option>
+                <option value="AC">Acre</option>
+                <option value="AL">Alagoas</option>
+                <option value="AP">Amapá</option>
+                <option value="AM">Amazonas</option>
+                <option value="BA">Bahia</option>
+                <option value="CE">Ceará</option>
+                <option value="DF">Distrito Federal</option>
+                <option value="ES">Espírito Santo</option>
+                <option value="GO">Goiás</option>
+                <option value="MA">Maranhão</option>
+                <option value="MT">Mato Grosso</option>
+                <option value="MS">Mato Grosso do Sul</option>
+                <option value="MG">Minas Gerais</option>
+                <option value="PA">Pará</option>
+                <option value="PB">Paraíba</option>
+                <option value="PR">Paraná</option>
+                <option value="PE">Pernambuco</option>
+                <option value="PI">Piauí</option>
+                <option value="RJ">Rio de Janeiro</option>
+                <option value="RN">Rio Grande do Norte</option>
+                <option value="RS">Rio Grande do Sul</option>
+                <option value="RO">Rondônia</option>
+                <option value="RR">Roraima</option>
+                <option value="SC">Santa Catarina</option>
+                <option value="SP">São Paulo</option>
+                <option value="SE">Sergipe</option>
+                <option value="TO">Tocantins</option>
+              </select>
+            </div>
+            <div class="generator-field">
+              <label for="genCondicao">Condição de saúde</label>
+              <select id="genCondicao" class="gen-select" required>
+                <option value="">Selecione a condição</option>
+                <optgroup label="Deficiência Física">
+                  <option value="paraplegia">Paraplegia / Tetraplegia</option>
+                  <option value="amputacao">Amputação ou ausência de membros</option>
+                  <option value="paralisia_cerebral">Paralisia cerebral</option>
+                  <option value="nanismo">Nanismo</option>
+                  <option value="coluna">Problemas graves na coluna</option>
+                  <option value="avc">Sequelas de AVC</option>
+                  <option value="ler_dort">LER/DORT grave</option>
+                  <option value="artrodese">Artrodese ou próteses</option>
+                </optgroup>
+                <optgroup label="Deficiência Visual">
+                  <option value="cegueira">Cegueira total</option>
+                  <option value="baixa_visao">Baixa visão</option>
+                  <option value="visao_monocular">Visão monocular</option>
+                </optgroup>
+                <optgroup label="Deficiência Auditiva">
+                  <option value="surdez">Surdez total ou parcial</option>
+                </optgroup>
+                <optgroup label="Deficiência Mental / Intelectual">
+                  <option value="tea">Transtorno do Espectro Autista (TEA)</option>
+                  <option value="sindrome_down">Síndrome de Down</option>
+                  <option value="deficiencia_intelectual">Deficiência intelectual</option>
+                  <option value="esquizofrenia">Esquizofrenia</option>
+                </optgroup>
+                <optgroup label="Doenças Graves">
+                  <option value="cancer">Câncer (neoplasia maligna)</option>
+                  <option value="hiv">HIV/AIDS</option>
+                  <option value="esclerose">Esclerose múltipla</option>
+                  <option value="parkinson">Doença de Parkinson</option>
+                  <option value="hepatopatia">Hepatopatia grave</option>
+                  <option value="renal">Doença renal crônica</option>
+                  <option value="cardiopatia">Cardiopatia grave</option>
+                  <option value="artrite">Artrite reumatoide</option>
+                  <option value="fibromialgia">Fibromialgia severa</option>
+                </optgroup>
+                <optgroup label="Outras">
+                  <option value="outra">Outra condição</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-lg btn-gen" id="btnGerar">
+            <i class="fas fa-file-alt"></i> Gerar Relatório Completo
+          </button>
+        </div>
+
+        <!-- Generated Report -->
+        <div class="report-result" id="reportResult" style="display: none;">
+          <div class="report-header">
+            <div class="report-badge"><i class="fas fa-check-circle"></i> Relatório gerado com sucesso</div>
+            <h3 id="reportTitle"></h3>
+            <p class="report-date" id="reportDate"></p>
+          </div>
+
+          <div class="report-body">
+            <div class="report-section">
+              <h4><i class="fas fa-info-circle"></i> Resultado da verificação</h4>
+              <div class="report-status report-status-positive">
+                <i class="fas fa-check-circle"></i>
+                <p id="reportStatus"></p>
+              </div>
+            </div>
+
+            <div class="report-section">
+              <h4><i class="fas fa-file-invoice"></i> Documentação necessária</h4>
+              <ul class="report-list" id="reportDocs"></ul>
+            </div>
+
+            <div class="report-section">
+              <h4><i class="fas fa-list-ol"></i> Passo a passo para dar entrada</h4>
+              <ol class="report-steps" id="reportSteps"></ol>
+            </div>
+
+            <div class="report-section">
+              <h4><i class="fas fa-external-link-alt"></i> Link oficial da SEFAZ</h4>
+              <div class="report-link-box">
+                <p>Acesse o portal da Secretaria da Fazenda do seu estado para protocolar o pedido:</p>
+                <a href="#" class="report-sefaz-link" id="reportSefazLink" target="_blank" rel="noopener">
+                  <i class="fas fa-external-link-alt"></i> <span id="reportSefazText"></span>
+                </a>
+              </div>
+            </div>
+
+            <div class="report-section">
+              <h4><i class="fas fa-calendar-check"></i> Prazo do laudo médico</h4>
+              <p id="reportPrazoLaudo"></p>
+            </div>
+
+            <div class="report-section">
+              <h4><i class="fas fa-history"></i> Restituição retroativa</h4>
+              <p id="reportRestituicao"></p>
+            </div>
+
+            <div class="report-section">
+              <h4><i class="fas fa-gavel"></i> Base legal</h4>
+              <p id="reportBaseLegal"></p>
+            </div>
+          </div>
+
+          <div class="report-actions">
+            <button class="btn btn-primary" id="btnPrint">
+              <i class="fas fa-print"></i> Imprimir relatório
+            </button>
+            <button class="btn btn-outline-dark" id="btnNovoRelatorio">
+              <i class="fas fa-plus"></i> Gerar outro relatório
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report History -->
+      <div class="platform-section">
+        <div class="platform-section-header">
+          <h2><i class="fas fa-history"></i> Meus Relatórios</h2>
+        </div>
+        <div class="report-history" id="reportHistory">
+          <p class="history-empty" id="historyEmpty">Nenhum relatório gerado ainda. Use o formulário acima para gerar seu primeiro relatório.</p>
+        </div>
+      </div>
+
+      <!-- Upsell Section -->
+      <div class="platform-section upsell-section">
+        <div class="platform-section-header">
+          <h2><i class="fas fa-rocket"></i> Serviços Adicionais</h2>
+          <p>Precisa de mais ajuda? Conheça nossos serviços complementares</p>
+        </div>
+        <div class="upsell-grid">
+          <div class="upsell-card">
+            <div class="upsell-icon"><i class="fas fa-gavel"></i></div>
+            <h3>Consultoria Jurídica</h3>
+            <p>Orientação de um advogado especializado para dar entrada no seu processo de isenção.</p>
+            <span class="upsell-price">R$ 297</span>
+            <a href="#" class="btn btn-outline-dark btn-sm">Saber mais</a>
+          </div>
+          <div class="upsell-card">
+            <div class="upsell-icon"><i class="fas fa-file-signature"></i></div>
+            <h3>Petição Pronta</h3>
+            <p>Modelo de petição personalizado para casos de isenção negada administrativamente.</p>
+            <span class="upsell-price">R$ 97</span>
+            <a href="#" class="btn btn-outline-dark btn-sm">Saber mais</a>
+          </div>
+          <div class="upsell-card">
+            <div class="upsell-icon"><i class="fas fa-money-check-alt"></i></div>
+            <h3>Relatório de Restituição</h3>
+            <p>Relatório detalhado para recuperar IPVA pago indevidamente nos últimos 5 anos.</p>
+            <span class="upsell-price">R$ 67</span>
+            <a href="#" class="btn btn-outline-dark btn-sm">Saber mais</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Platform Footer -->
+  <footer class="platform-footer">
+    <div class="container">
+      <p>&copy; 2026 ZERO IPVA. Plataforma de Isenção.</p>
+    </div>
+  </footer>
+
+  <script src="auth.js"></script>
+  <script src="plataforma.js"></script>
+</body>
+</html>
