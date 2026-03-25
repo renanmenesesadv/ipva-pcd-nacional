@@ -53,3 +53,34 @@ export const leads = mysqlTable("leads", {
 
 export type Lead = typeof leads.$inferSelect;
 export type InsertLead = typeof leads.$inferInsert;
+
+// Tabela de clientes pagos via Kiwify
+export const customers = mysqlTable("customers", {
+  id: int("id").autoincrement().primaryKey(),
+
+  // Dados do cliente
+  email: varchar("email", { length: 320 }).notNull(),
+  nome: varchar("nome", { length: 255 }).notNull(),
+  telefone: varchar("telefone", { length: 20 }),
+
+  // Plano: relatorio_avulso (R$17), plano_anual (R$37), consultoria (R$297)
+  plano: mysqlEnum("plano", ["relatorio_avulso", "plano_anual", "consultoria"]).notNull(),
+
+  // Controle de uso (relatório avulso = max 1)
+  relatoriosUsados: int("relatoriosUsados").default(0).notNull(),
+
+  // Kiwify
+  kiwifyOrderId: varchar("kiwifyOrderId", { length: 100 }),
+
+  // Status
+  status: mysqlEnum("status", ["active", "expired", "refunded"]).default("active").notNull(),
+
+  // Expiração (plano_anual expira em 12 meses, outros não expiram)
+  expiresAt: timestamp("expiresAt"),
+
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Customer = typeof customers.$inferSelect;
+export type InsertCustomer = typeof customers.$inferInsert;

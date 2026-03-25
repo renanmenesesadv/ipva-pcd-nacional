@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import {
   Users, TrendingUp, Phone, Download, Search, Filter,
   CheckCircle2, XCircle, Shield, ArrowLeft, RefreshCw,
-  BarChart2, FileSpreadsheet
+  BarChart2, FileSpreadsheet, UserPlus, Crown, Trash2
 } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
@@ -33,6 +33,13 @@ export default function AdminDashboard() {
   const [filtroElegivel, setFiltroElegivel] = useState("todos");
   const [filtroContatado, setFiltroContatado] = useState("todos");
   const [pagina, setPagina] = useState(1);
+  const [activeTab, setActiveTab] = useState<"leads" | "clientes">("leads");
+
+  // Form para adicionar cliente manualmente
+  const [novoClienteEmail, setNovoClienteEmail] = useState("");
+  const [novoClienteNome, setNovoClienteNome] = useState("");
+  const [novoClienteTelefone, setNovoClienteTelefone] = useState("");
+  const [novoClientePlano, setNovoClientePlano] = useState<string>("plano_anual");
 
   const utils = trpc.useUtils();
 
@@ -69,6 +76,49 @@ export default function AdminDashboard() {
       toast.success("Status atualizado!");
     },
   });
+
+  // === Clientes ===
+  const { data: clientesData, isLoading: clientesLoading } = trpc.admin.listarClientes.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === "admin" && activeTab === "clientes",
+  });
+
+  const adicionarCliente = trpc.admin.adicionarCliente.useMutation({
+    onSuccess: () => {
+      utils.admin.listarClientes.invalidate();
+      setNovoClienteEmail("");
+      setNovoClienteNome("");
+      setNovoClienteTelefone("");
+      toast.success("Cliente adicionado com sucesso!");
+    },
+    onError: (err) => toast.error("Erro: " + err.message),
+  });
+
+  const removerCliente = trpc.admin.removerCliente.useMutation({
+    onSuccess: () => {
+      utils.admin.listarClientes.invalidate();
+      toast.success("Cliente desativado!");
+    },
+  });
+
+  const reativarCliente = trpc.admin.reativarCliente.useMutation({
+    onSuccess: () => {
+      utils.admin.listarClientes.invalidate();
+      toast.success("Cliente reativado!");
+    },
+  });
+
+  const handleAdicionarCliente = () => {
+    if (!novoClienteEmail || !novoClienteNome) {
+      toast.error("Preencha email e nome");
+      return;
+    }
+    adicionarCliente.mutate({
+      email: novoClienteEmail,
+      nome: novoClienteNome,
+      telefone: novoClienteTelefone || undefined,
+      plano: novoClientePlano as "relatorio_avulso" | "plano_anual" | "consultoria",
+    });
+  };
 
   const handleExportarCSV = async () => {
     const result = await gerarCSV();
@@ -137,7 +187,25 @@ export default function AdminDashboard() {
             </Link>
             <div className="h-6 w-px bg-gray-300" />
             <Shield className="w-6 h-6 text-blue-700" />
-            <h1 className="text-xl font-bold text-blue-900">Dashboard de Leads</h1>
+            <h1 className="text-xl font-bold text-blue-900">Painel Admin</h1>
+            <div className="flex gap-1 ml-4">
+              <button
+                onClick={() => setActiveTab("leads")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === "leads" ? "bg-blue-100 text-blue-800" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Leads
+              </button>
+              <button
+                onClick={() => setActiveTab("clientes")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === "clientes" ? "bg-green-100 text-green-800" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Clientes
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600">Olá, {user?.name}</span>
@@ -150,6 +218,150 @@ export default function AdminDashboard() {
       </header>
 
       <div className="container py-8">
+        {/* ===== TAB: CLIENTES ===== */}
+        {activeTab === "clientes" && (
+          <div className="space-y-6">
+            {/* Formulário para adicionar cliente */}
+            <Card className="p-6 border-2 border-green-200">
+              <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-green-600" />
+                Liberar Acesso Manualmente
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Use para liberar clientes que compraram mas nao tiveram acesso automatico via webhook.
+              </p>
+              <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-3">
+                <Input
+                  placeholder="Email do cliente *"
+                  value={novoClienteEmail}
+                  onChange={(e) => setNovoClienteEmail(e.target.value)}
+                />
+                <Input
+                  placeholder="Nome completo *"
+                  value={novoClienteNome}
+                  onChange={(e) => setNovoClienteNome(e.target.value)}
+                />
+                <Input
+                  placeholder="Telefone (opcional)"
+                  value={novoClienteTelefone}
+                  onChange={(e) => setNovoClienteTelefone(e.target.value)}
+                />
+                <Select value={novoClientePlano} onValueChange={setNovoClientePlano}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Plano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="relatorio_avulso">Avulso (R$17)</SelectItem>
+                    <SelectItem value="plano_anual">Anual (R$37)</SelectItem>
+                    <SelectItem value="consultoria">Consultoria (R$297)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handleAdicionarCliente}
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={adicionarCliente.isPending}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  {adicionarCliente.isPending ? "Salvando..." : "Liberar Acesso"}
+                </Button>
+              </div>
+            </Card>
+
+            {/* Tabela de Clientes */}
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b flex items-center justify-between">
+                <h3 className="font-bold text-gray-900">
+                  {clientesData ? `${clientesData.length} clientes` : "Carregando..."}
+                </h3>
+                <Button variant="outline" size="sm" onClick={() => utils.admin.listarClientes.invalidate()}>
+                  <RefreshCw className="w-4 h-4 mr-1" /> Atualizar
+                </Button>
+              </div>
+
+              {clientesLoading ? (
+                <div className="p-8 text-center">
+                  <RefreshCw className="w-6 h-6 animate-spin mx-auto text-green-600 mb-2" />
+                  <p className="text-gray-600">Carregando clientes...</p>
+                </div>
+              ) : clientesData?.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <Crown className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>Nenhum cliente cadastrado ainda.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Nome</th>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Email</th>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Plano</th>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Origem</th>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Data</th>
+                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Acao</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {clientesData?.map((cliente) => (
+                        <tr key={cliente.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 font-medium text-gray-900">{cliente.nome}</td>
+                          <td className="px-4 py-3 text-gray-700">{cliente.email}</td>
+                          <td className="px-4 py-3">
+                            <Badge className={
+                              cliente.plano === "consultoria" ? "bg-purple-100 text-purple-800 border-purple-200" :
+                              cliente.plano === "plano_anual" ? "bg-blue-100 text-blue-800 border-blue-200" :
+                              "bg-gray-100 text-gray-800 border-gray-200"
+                            }>
+                              {cliente.plano === "consultoria" ? "Consultoria" :
+                               cliente.plano === "plano_anual" ? "Anual" : "Avulso"}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge className={
+                              cliente.status === "active" ? "bg-green-100 text-green-800" :
+                              cliente.status === "refunded" ? "bg-red-100 text-red-800" :
+                              "bg-yellow-100 text-yellow-800"
+                            }>
+                              {cliente.status === "active" ? "Ativo" :
+                               cliente.status === "refunded" ? "Reembolsado" : "Expirado"}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 text-xs">
+                            {cliente.kiwifyOrderId === "manual" ? "Manual" : "Kiwify"}
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 text-xs">
+                            {new Date(cliente.createdAt).toLocaleDateString("pt-BR")}
+                          </td>
+                          <td className="px-4 py-3">
+                            {cliente.status === "active" ? (
+                              <button
+                                onClick={() => removerCliente.mutate({ id: cliente.id })}
+                                className="text-red-600 hover:text-red-800 text-xs font-medium flex items-center gap-1"
+                              >
+                                <Trash2 className="w-3 h-3" /> Desativar
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => reativarCliente.mutate({ id: cliente.id })}
+                                className="text-green-600 hover:text-green-800 text-xs font-medium flex items-center gap-1"
+                              >
+                                <CheckCircle2 className="w-3 h-3" /> Reativar
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+
+        {/* ===== TAB: LEADS ===== */}
+        {activeTab === "leads" && <>
         {/* Cards de Estatísticas */}
         {statsLoading ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -428,6 +640,7 @@ export default function AdminDashboard() {
             </div>
           )}
         </Card>
+        </>}
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import IPVAForm from "@/components/IPVAForm";
 import ResultPage from "./ResultPage";
-import { CheckCircle2, FileText, Zap, Shield, ChevronRight } from "lucide-react";
+import { CheckCircle2, FileText, Zap, Shield, ChevronRight, Crown, Star, Lock } from "lucide-react";
 import type { DadosDocumento } from "@/lib/documentGenerator";
 import LeadForm from "@/components/LeadForm";
 
@@ -56,6 +56,12 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <p className="hidden sm:block text-sm text-gray-600">Isenção de IPVA para Pessoas com Deficiência</p>
+            <a
+              href={`${import.meta.env.BASE_URL}plataforma`.replace("//", "/")}
+              className="text-sm font-semibold text-blue-700 hover:text-blue-900 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              Ja sou cliente
+            </a>
             <a href="/admin" className="text-xs text-gray-400 hover:text-gray-600">Admin</a>
           </div>
         </div>
@@ -250,9 +256,134 @@ export default function Home() {
         </section>
       )}
 
+      {/* Pricing */}
+      {!showForm && !documentoGerado && (
+        <section className="py-16 lg:py-20 bg-white" id="planos">
+          <div className="container">
+            <h2 className="text-3xl lg:text-4xl font-bold text-center text-blue-900 mb-4">
+              Escolha seu Plano
+            </h2>
+            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto text-lg">
+              Acesso completo a plataforma com relatorio personalizado, documentacao e passo a passo
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {/* Relatorio Avulso */}
+              <Card className="p-8 border-2 border-gray-200 hover:border-blue-300 transition-colors relative">
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-xl font-bold text-gray-900">Relatorio Avulso</h3>
+                  </div>
+                  <p className="text-sm text-gray-500">Ideal para quem quer testar</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-gray-900">R$ 17</span>
+                  <span className="text-gray-500 ml-1">unico</span>
+                </div>
+                <ul className="space-y-3 mb-8 text-sm">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> 1 relatorio completo</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Estado + condicao a escolha</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Documentacao necessaria</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Passo a passo da SEFAZ</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Link oficial do estado</li>
+                  <li className="flex items-center gap-2 text-gray-400"><Lock className="w-4 h-4" /> Relatorios ilimitados</li>
+                  <li className="flex items-center gap-2 text-gray-400"><Lock className="w-4 h-4" /> Restituicao retroativa</li>
+                </ul>
+                <a
+                  href="https://pay.kiwify.com.br/K9D0GGL"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  Gerar meu relatorio
+                </a>
+              </Card>
+
+              {/* Plano Anual */}
+              <Card className="p-8 border-2 border-blue-500 hover:border-blue-600 transition-colors relative shadow-lg scale-[1.02]">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full">
+                  Mais popular
+                </div>
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-xl font-bold text-gray-900">Plano Anual</h3>
+                  </div>
+                  <p className="text-sm text-gray-500">Acesso completo por 12 meses</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-gray-900">R$ 37</span>
+                  <span className="text-gray-500 ml-1">/ano</span>
+                </div>
+                <ul className="space-y-3 mb-8 text-sm">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Relatorios ilimitados</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Todos os 27 estados</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Todas as condicoes cobertas</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Documentacao completa</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Passo a passo + link SEFAZ</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Guia de restituicao retroativa</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Atualizacoes por 12 meses</li>
+                </ul>
+                <a
+                  href="https://pay.kiwify.com.br/LvHpEUd"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center px-6 py-3 bg-blue-700 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors"
+                >
+                  Assinar agora
+                </a>
+                <p className="text-center text-xs text-gray-500 mt-3">7 dias de garantia</p>
+              </Card>
+
+              {/* Consultoria */}
+              <Card className="p-8 border-2 border-purple-200 hover:border-purple-400 transition-colors relative">
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Crown className="w-5 h-5 text-purple-600" />
+                    <h3 className="text-xl font-bold text-gray-900">Consultoria Juridica</h3>
+                  </div>
+                  <p className="text-sm text-gray-500">Acompanhamento profissional</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-gray-900">R$ 297</span>
+                  <span className="text-gray-500 ml-1">unico</span>
+                </div>
+                <ul className="space-y-3 mb-8 text-sm">
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Tudo do Plano Anual</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Consultoria com advogado</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Analise do seu caso especifico</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Orientacao para dar entrada</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Modelo de peticao pronta</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Suporte via WhatsApp</li>
+                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Acompanhamento do processo</li>
+                </ul>
+                <a
+                  href="https://pay.kiwify.com.br/CDOzVHV"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center px-6 py-3 bg-purple-700 text-white font-semibold rounded-lg hover:bg-purple-800 transition-colors"
+                >
+                  Contratar consultoria
+                </a>
+              </Card>
+            </div>
+
+            <div className="text-center mt-8">
+              <a
+                href={`${import.meta.env.BASE_URL}plataforma`.replace("//", "/")}
+                className="text-blue-700 font-semibold hover:underline"
+              >
+                Ja comprou? Acesse a plataforma aqui →
+              </a>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* FAQ */}
       {!showForm && !documentoGerado && (
-        <section className="py-16 lg:py-20 bg-white">
+        <section className="py-16 lg:py-20 bg-gray-50">
           <div className="container">
             <h2 className="text-3xl font-bold text-center text-blue-900 mb-4">
               Dúvidas Frequentes

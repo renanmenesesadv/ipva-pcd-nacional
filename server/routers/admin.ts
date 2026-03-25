@@ -2,7 +2,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
-import { leads } from "../../drizzle/schema";
+import { leads, customers } from "../../drizzle/schema";
 import { eq, desc, like, and, or } from "drizzle-orm";
 
 // Middleware para verificar se é admin
@@ -204,5 +204,76 @@ export const adminRouter = router({
       );
 
       return { csv: [cabecalho, ...linhas].join("\n"), total: todos.length };
+    }),
+
+  // ===== GESTÃO DE CLIENTES (PÓS-PAGAMENTO) =====
+
+  // Listar todos os clientes
+  listarClientes: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    return db.select().from(customers).orderBy(desc(customers.createdAt));
+  }),
+
+  // Adicionar cliente manualmente (para liberar acesso sem webhook)
+  adicionarCliente: adminProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+        nome: z.string().min(2),
+        telefone: z.string().optional(),
+        plano: z.enum(["relatorio_avulso", "plano_anual", "consultoria"]),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const email = input.email.toLowerCase().trim();
+      const expiresAt = input.plano === "plano_anual"
+        ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+        : null;
+
+      await db.insert(customers).values({
+        email,
+        nome: input.nome,
+        telefone: input.telefone || null,
+        plano: input.plano,
+        status: "active",
+        relatoriosUsados: 0,
+        kiwifyOrderId: "manual",
+        expiresAt,
+      });
+
+      return { success: true };
+    }),
+
+  // Remover/desativar cliente
+  removerCliente: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await db.update(customers)
+        .set({ status: "expired" })
+        .where(eq(customers.id, input.id));
+
+      return { success: true };
+    }),
+
+  // Reativar cliente
+  reativarCliente: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await db.update(customers)
+        .set({ status: "active" })
+        .where(eq(customers.id, input.id));
+
+      return { success: true };
     }),
 });
