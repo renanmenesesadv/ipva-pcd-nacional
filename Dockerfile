@@ -18,7 +18,13 @@ ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 RUN pnpm exec vite build && \
     pnpm exec esbuild server/_core/index.ts \
     --platform=node --packages=external --bundle --format=esm --outdir=dist \
-    '--define:process.env.NODE_ENV="production"'
+    '--define:process.env.NODE_ENV="production"' && \
+    mkdir -p dist/sales && \
+    cp -f index.html styles.css script.js dist/sales/ 2>/dev/null; \
+    cp -f plataforma.html plataforma.css plataforma.js dist/sales/ 2>/dev/null; \
+    cp -f login.html auth.css auth.js dist/sales/ 2>/dev/null; \
+    cp -f checkout.html cadastro.html ativar.html dist/sales/ 2>/dev/null; \
+    true
 
 # Production dependencies only
 FROM base AS prod-deps

@@ -55,12 +55,30 @@ async function startServer() {
     await setupVite(app, server);
   } else {
     const distPath = path.resolve(import.meta.dirname, "public");
+    const salesPath = path.resolve(import.meta.dirname, "sales");
     if (!fs.existsSync(distPath)) {
       console.error(`Could not find the build directory: ${distPath}, make sure to build the client first`);
     }
+
+    // Página de vendas estática na raiz (index.html, styles.css, script.js, etc.)
+    if (fs.existsSync(salesPath)) {
+      app.get("/", (_req, res) => res.sendFile(path.resolve(salesPath, "index.html")));
+      app.use(express.static(salesPath));
+    }
+
+    // App React (plataforma, admin, etc.)
     app.use(express.static(distPath));
-    app.use("*", (_req, res) => {
-      res.sendFile(path.resolve(distPath, "index.html"));
+
+    // SPA fallback — rotas do React (/plataforma, /admin, etc.)
+    app.use("*", (req, res) => {
+      const url = (req as any).originalUrl || req.url || "";
+      // Se for uma rota do app React, serve o index.html do React
+      if (url.startsWith("/plataforma") || url.startsWith("/admin") || url.startsWith("/404")) {
+        res.sendFile(path.resolve(distPath, "index.html"));
+      } else {
+        // Qualquer outra rota desconhecida → página de vendas
+        res.sendFile(path.resolve(salesPath || distPath, "index.html"));
+      }
     });
   }
 
