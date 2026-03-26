@@ -37,6 +37,8 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // Redirect pós-compra Kiwify (login.html → /plataforma)
+  app.get("/login.html", (_req, res) => res.redirect(301, "/plataforma"));
   // Kiwify webhook
   app.use("/api/kiwify", kiwifyRouter);
   // tRPC API
