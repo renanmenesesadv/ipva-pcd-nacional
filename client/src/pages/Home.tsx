@@ -3,22 +3,41 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import IPVAForm from "@/components/IPVAForm";
 import ResultPage from "./ResultPage";
-import { CheckCircle2, FileText, Zap, Shield, ChevronRight, Crown, Star, Lock } from "lucide-react";
+import {
+  CheckCircle2, FileText, Zap, Shield, ChevronRight, Crown, Star, Lock,
+  AlertTriangle, Clock, TrendingDown, Users, ArrowRight, ChevronDown,
+  DollarSign, Eye, ShieldCheck, Target, MessageCircle
+} from "lucide-react";
 import type { DadosDocumento } from "@/lib/documentGenerator";
 import LeadForm from "@/components/LeadForm";
 
-// Tabela de deficiências elegíveis com exemplos reais
-const DEFICIENCIAS_ELEGIVEIS = [
-  { nome: "Transtorno do Espectro Autista (TEA)", destaque: true, estados: "27 estados" },
-  { nome: "Síndrome de Down", destaque: false, estados: "27 estados" },
-  { nome: "Paralisia Cerebral", destaque: false, estados: "27 estados" },
-  { nome: "Deficiência Física Motora", destaque: false, estados: "27 estados" },
-  { nome: "Deficiência Visual (cegueira ou baixa visão)", destaque: false, estados: "27 estados" },
-  { nome: "Deficiência Mental Severa ou Profunda", destaque: false, estados: "27 estados" },
-  { nome: "Paraplegia / Tetraplegia / Hemiplegia", destaque: false, estados: "27 estados" },
-  { nome: "Amputação ou ausência de membro", destaque: false, estados: "27 estados" },
-  { nome: "Deficiência Auditiva (em alguns estados)", destaque: false, estados: "Varia por estado" },
-  { nome: "TDAH severo (em alguns estados)", destaque: false, estados: "Varia por estado" },
+const CASOS_ELEGIVEIS = [
+  "Transtorno do Espectro Autista (TEA)",
+  "Deficiencia fisica",
+  "Deficiencia visual",
+  "Deficiencia auditiva",
+  "Sindrome de Down",
+  "Paralisia cerebral",
+  "Deficiencia intelectual severa",
+  "Mobilidade reduzida",
+  "Amputacao ou ausencia de membro",
+  "Outras hipoteses previstas na legislacao estadual",
+];
+
+const DEPOIMENTOS = [
+  { texto: "Eu nem imaginava que meu filho com TEA poderia dar esse direito. Descobri rapido e finalmente entendi o caminho.", nome: "Mariana", estado: "PE" },
+  { texto: "Eu ja tinha pesquisado antes e so me confundia. Aqui ficou muito mais claro.", nome: "Carlos", estado: "GO" },
+  { texto: "Se eu tivesse verificado antes, teria economizado muito tempo.", nome: "Fernanda", estado: "SP" },
+];
+
+const FAQ_ITEMS = [
+  { q: "Quem pode ter direito a isencao?", a: "Pessoas com deficiencia, TEA, mobilidade reduzida e outros casos previstos na legislacao estadual." },
+  { q: "A pessoa precisa dirigir?", a: "Nem sempre. Em muitos casos, vale a pena verificar mesmo quando a propria pessoa nao conduz o veiculo." },
+  { q: "Serve para qualquer estado?", a: "Sim. A analise considera a variacao das regras estaduais nos 27 estados." },
+  { q: "Quanto tempo leva?", a: "Poucos minutos." },
+  { q: "Posso verificar para meu filho ou outro familiar?", a: "Sim." },
+  { q: "Veiculo usado pode entrar?", a: "Dependendo do estado e da situacao, sim." },
+  { q: "Ja paguei IPVA antes. Ainda assim devo verificar?", a: "Sim. O importante e entender se voce pode parar de pagar daqui para frente." },
 ];
 
 interface LeadData {
@@ -33,6 +52,7 @@ export default function Home() {
   const [documentoGerado, setDocumentoGerado] = useState<DadosDocumento | null>(null);
   const [leadCapturado, setLeadCapturado] = useState(false);
   const [leadData, setLeadData] = useState<LeadData | null>(null);
+  const [faqOpen, setFaqOpen] = useState<number | null>(null);
 
   useEffect(() => {
     (window as any).__onDocumentoGerado = (dados: DadosDocumento) => {
@@ -45,335 +65,433 @@ export default function Home() {
     setLeadCapturado(true);
   };
 
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+  const CTAButton = ({ text = "QUERO VER SE TENHO DIREITO", className = "" }: { text?: string; className?: string }) => (
+    <Button
+      onClick={() => { setShowForm(true); scrollToTop(); }}
+      className={`h-14 sm:h-16 px-8 sm:px-10 text-base sm:text-lg font-bold bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-lg hover:shadow-2xl transition-all w-full sm:w-auto active:scale-95 ${className}`}
+    >
+      {text}
+      <ArrowRight className="w-5 h-5 ml-2" />
+    </Button>
+  );
+
+  const landing = !showForm && !documentoGerado;
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-green-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="container py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-white">
+      {/* BARRA DE ALERTA */}
+      {landing && (
+        <div className="bg-red-600 py-2.5 px-4">
+          <p className="text-white text-center text-xs sm:text-sm font-semibold">
+            <AlertTriangle className="w-4 h-4 inline mr-1 -mt-0.5" />
+            ATENCAO: voce pode estar pagando IPVA sem precisar — verifique agora antes do proximo vencimento
+          </p>
+        </div>
+      )}
+
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
+        <div className="container py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Shield className="w-8 h-8 text-blue-700" />
-            <h1 className="text-2xl font-bold text-blue-900">IPVA Zero PCD</h1>
+            <Shield className="w-7 h-7 text-blue-700" />
+            <span className="text-xl font-bold text-blue-900">IPVA Zero</span>
           </div>
-          <div className="flex items-center gap-4">
-            <p className="hidden sm:block text-sm text-gray-600">Isenção de IPVA para Pessoas com Deficiência</p>
+          <div className="flex items-center gap-3">
             <a
               href={`${import.meta.env.BASE_URL}plataforma`.replace("//", "/")}
-              className="text-sm font-semibold text-blue-700 hover:text-blue-900 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+              className="text-xs sm:text-sm font-semibold text-blue-700 hover:text-blue-900 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
             >
               Ja sou cliente
             </a>
-            <a href="/admin" className="text-xs text-gray-400 hover:text-gray-600">Admin</a>
+            <a href="/admin" className="text-xs text-gray-300 hover:text-gray-500 hidden">Admin</a>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      {!showForm && !documentoGerado && (
-        <section className="relative overflow-hidden">
-          <div className="container py-16 lg:py-24">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Conteúdo */}
-              <div className="space-y-8">
-                <div>
-                  {/* Título Principal */}
-                  <div className="inline-block bg-red-100 text-red-800 text-sm font-bold px-4 py-2 rounded-full mb-6 border border-red-200">
-                    ⚠️ Você pode estar pagando IPVA indevidamente
-                  </div>
-                  <h2 className="text-4xl lg:text-5xl font-bold text-blue-900 leading-tight mb-6">
-                    Se você tem um filho com{" "}
-                    <span className="text-green-600 underline decoration-wavy decoration-green-400">autismo</span>
-                    {" "}— o carro da sua família pode ser isento de IPVA
-                  </h2>
-                  <p className="text-lg text-gray-700 leading-relaxed">
-                    A lei federal garante isenção de IPVA para veículos de famílias PCD em todos os 27 estados.
-                    Mas cada estado tem suas próprias regras — e a maioria das famílias <strong>nunca soube que tinha esse direito</strong>.
-                  </p>
-                </div>
-
-                {/* Benefícios */}
-                <div className="space-y-3">
-                  <div className="flex gap-3 items-start">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-gray-700">O autismo (TEA) é reconhecido como deficiência elegível em <strong>todos os estados</strong></p>
-                  </div>
-                  <div className="flex gap-3 items-start">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-gray-700">Mesmo que a criança <strong>não dirija</strong>, o veículo dos pais pode ser isento</p>
-                  </div>
-                  <div className="flex gap-3 items-start">
-                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-gray-700">Descubra em 2 minutos e receba o <strong>guia completo para solicitar</strong></p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Button
-                    onClick={() => setShowForm(true)}
-                    className="h-14 px-8 text-lg font-semibold bg-blue-700 hover:bg-blue-800 text-white rounded-lg shadow-lg hover:shadow-xl transition-all w-full sm:w-auto"
-                  >
-                    Verificar Meu Direito Agora
-                    <ChevronRight className="w-5 h-5 ml-2" />
-                  </Button>
-                  <p className="text-sm text-gray-500 flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    Gratuito · Sem cadastro obrigatório · Resultado imediato
-                  </p>
-                </div>
+      {/* ========== HERO ========== */}
+      {landing && (
+        <section className="bg-gradient-to-br from-blue-950 via-blue-900 to-blue-800 text-white">
+          <div className="container py-12 sm:py-20 lg:py-24">
+            <div className="max-w-3xl mx-auto text-center space-y-6 sm:space-y-8">
+              <div className="inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-400/40 text-yellow-300 text-xs sm:text-sm font-bold px-4 py-2 rounded-full">
+                <DollarSign className="w-4 h-4" />
+                Pode existir direito no seu caso
               </div>
 
-              {/* Imagem Hero */}
-              <div className="relative">
-                <img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310419663028378501/7ZncGsv2hGnaUj393SZoUY/hero-banner-ipva-je3KnTjBqfNSGnFqr2gcPa.webp"
-                  alt="Família com criança com autismo"
-                  className="rounded-xl shadow-2xl w-full"
-                />
-                <div className="absolute -bottom-4 -left-4 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg">
-                  <p className="text-sm font-bold">✓ TEA reconhecido em todos os estados</p>
-                  <p className="text-xs opacity-90">Laudo com prazo indeterminado</p>
-                </div>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight">
+                Seu carro pode estar pagando IPVA{" "}
+                <span className="text-yellow-400">a toa</span>{" "}
+                — descubra agora se voce tem direito a isencao
+              </h1>
+
+              <p className="text-base sm:text-lg text-blue-100 leading-relaxed max-w-2xl mx-auto">
+                Se voce, seu filho ou alguem da sua familia tem TEA, deficiencia, mobilidade reduzida ou outra condicao prevista em lei, pode existir direito a isencao de IPVA no seu estado.
+              </p>
+
+              <div className="flex flex-wrap justify-center gap-3 text-sm">
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full">
+                  <CheckCircle2 className="w-4 h-4 text-green-400" /> Descubra em poucos minutos
+                </span>
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full">
+                  <CheckCircle2 className="w-4 h-4 text-green-400" /> Verificacao simples e online
+                </span>
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full">
+                  <CheckCircle2 className="w-4 h-4 text-green-400" /> Regras por estado
+                </span>
+                <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full">
+                  <CheckCircle2 className="w-4 h-4 text-green-400" /> Saiba se vale a pena pedir
+                </span>
               </div>
+
+              <div className="pt-2">
+                <CTAButton />
+                <p className="text-blue-300 text-xs sm:text-sm mt-3">
+                  Leva menos de 2 minutos • Acesso imediato • 100% online
+                </p>
+              </div>
+
+              <p className="text-blue-200/70 text-sm italic pt-2">
+                Milhares de familias pagam esse imposto sem necessidade simplesmente porque nunca verificaram.
+              </p>
             </div>
           </div>
         </section>
       )}
 
-      {/* Barra de urgência */}
-      {!showForm && !documentoGerado && (
-        <div className="bg-yellow-400 py-3">
-          <div className="container text-center">
-            <p className="text-yellow-900 font-semibold text-sm">
-              ⚠️ O prazo para solicitar isenção varia por estado — verifique agora antes de pagar o IPVA deste ano
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Seção: Quem tem direito */}
-      {!showForm && !documentoGerado && (
-        <section className="bg-white py-16 lg:py-20">
+      {/* ========== DOR / IMPACTO ========== */}
+      {landing && (
+        <section className="py-12 sm:py-16 bg-gray-50">
           <div className="container">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl lg:text-4xl font-bold text-blue-900 mb-4 text-center">
-                Sua família pode estar entre as que têm direito
+            <div className="max-w-3xl mx-auto text-center space-y-6">
+              <TrendingDown className="w-12 h-12 text-red-500 mx-auto" />
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900">
+                Voce pode estar perdendo dinheiro todos os anos <span className="text-red-600">sem saber</span>
               </h2>
-              <p className="text-center text-gray-600 mb-12 text-lg">
-                As seguintes condições são reconhecidas pela legislação estadual de IPVA em todo o Brasil:
-              </p>
+              <p className="text-gray-600 text-base sm:text-lg">Muita gente continua pagando IPVA porque:</p>
 
-              <div className="grid sm:grid-cols-2 gap-3 mb-10">
-                {DEFICIENCIAS_ELEGIVEIS.map((def, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-3 p-4 rounded-lg border-2 ${
-                      def.destaque
-                        ? "border-green-400 bg-green-50"
-                        : "border-gray-100 bg-gray-50"
-                    }`}
-                  >
-                    <CheckCircle2
-                      className={`w-5 h-5 flex-shrink-0 ${
-                        def.destaque ? "text-green-600" : "text-blue-400"
-                      }`}
-                    />
-                    <div>
-                      <p className={`font-medium text-sm ${def.destaque ? "text-green-900" : "text-gray-800"}`}>
-                        {def.nome}
-                        {def.destaque && (
-                          <span className="ml-2 bg-green-600 text-white text-xs px-2 py-0.5 rounded-full">
-                            Destaque
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-gray-500">{def.estados}</p>
-                    </div>
+              <div className="grid sm:grid-cols-2 gap-3 text-left max-w-2xl mx-auto">
+                {[
+                  "Nunca foi informada do proprio direito",
+                  "Acha que isso e so para poucos casos",
+                  "Pensa que o processo e complicado demais",
+                  "Nao sabe por onde comecar",
+                  "Desiste antes mesmo de verificar",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-red-100">
+                    <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                    <span className="text-gray-700 text-sm">{item}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-                <p className="text-blue-900 font-semibold text-lg mb-2">
-                  Sua condição não está na lista?
+              <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6 mt-4">
+                <p className="text-red-900 font-bold text-lg sm:text-xl">
+                  Se existe a chance de voce nao precisar pagar, o erro e continuar ignorando isso.
                 </p>
-                <p className="text-blue-700 text-sm mb-4">
-                  A legislação é ampla e pode abranger outras situações. Faça o teste e descubra as regras específicas do seu estado.
+              </div>
+
+              <CTAButton text="VERIFICAR MEU DIREITO AGORA" />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========== CASOS ELEGIVEIS ========== */}
+      {landing && (
+        <section className="py-12 sm:py-16 bg-white">
+          <div className="container">
+            <div className="max-w-3xl mx-auto text-center space-y-6">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                Veja alguns casos que podem ter direito a isencao
+              </h2>
+              <p className="text-gray-500">A elegibilidade depende das regras do estado, mas estes sao alguns dos casos mais comuns:</p>
+
+              <div className="grid sm:grid-cols-2 gap-2 text-left">
+                {CASOS_ELEGIVEIS.map((caso, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-green-50 border border-green-100">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                    <span className="text-gray-800 text-sm font-medium">{caso}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+                <p className="text-blue-900 font-semibold">
+                  Mesmo que a pessoa nao dirija, em muitos casos ainda vale a pena verificar.
                 </p>
-                <Button
-                  onClick={() => setShowForm(true)}
-                  className="bg-blue-700 hover:bg-blue-800 text-white"
-                >
-                  Fazer o Teste Gratuito
-                </Button>
+              </div>
+
+              <CTAButton text="QUERO SABER SE MEU CASO ENTRA" />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========== O QUE VOCE RECEBE ========== */}
+      {landing && (
+        <section className="py-12 sm:py-16 bg-gray-50">
+          <div className="container">
+            <div className="max-w-3xl mx-auto text-center space-y-6">
+              <Eye className="w-10 h-10 text-blue-600 mx-auto" />
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                Em vez de pesquisar sozinho, receba uma analise clara do seu caso
+              </h2>
+
+              <div className="grid sm:grid-cols-2 gap-4 text-left">
+                {[
+                  { icon: Target, text: "Se existe chance de isencao no seu caso" },
+                  { icon: FileText, text: "Quais criterios podem se aplicar" },
+                  { icon: Shield, text: "Quais documentos normalmente entram" },
+                  { icon: ArrowRight, text: "O que voce deve fazer depois" },
+                ].map(({ icon: Icon, text }, i) => (
+                  <div key={i} className="flex items-start gap-3 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <Icon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-700 text-sm">{text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-green-50 border border-green-200 rounded-xl p-5">
+                <p className="text-green-900 font-semibold">
+                  Voce nao precisa ficar perdido em regra, video solto ou informacao confusa.
+                </p>
+              </div>
+
+              <CTAButton text="COMECAR MINHA ANALISE" />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========== COMO FUNCIONA ========== */}
+      {landing && (
+        <section className="py-12 sm:py-16 bg-white">
+          <div className="container">
+            <div className="max-w-3xl mx-auto text-center space-y-8">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                E rapido, simples e direto
+              </h2>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                {[
+                  { num: "1", title: "Preencha suas informacoes", desc: "Informe estado, condicao e dados basicos do caso." },
+                  { num: "2", title: "Receba sua analise", desc: "A plataforma cruza suas respostas com as regras aplicaveis." },
+                  { num: "3", title: "Veja o proximo passo", desc: "Voce entende se vale a pena avancar e o que observar." },
+                ].map((step, i) => (
+                  <Card key={i} className="p-6 border-2 border-blue-100 text-center relative overflow-hidden">
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-green-500" />
+                    <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                      {step.num}
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-2">{step.title}</h3>
+                    <p className="text-gray-600 text-sm">{step.desc}</p>
+                  </Card>
+                ))}
+              </div>
+
+              <p className="text-gray-500 text-sm font-medium">
+                Sem burocracia inicial. Sem enrolacao. Sem linguagem dificil.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========== BENEFICIOS ========== */}
+      {landing && (
+        <section className="py-12 sm:py-16 bg-blue-950 text-white">
+          <div className="container">
+            <div className="max-w-4xl mx-auto text-center space-y-8">
+              <h2 className="text-2xl sm:text-3xl font-extrabold">Por que verificar agora</h2>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { icon: DollarSign, title: "Pare de pagar sem necessidade", desc: "Se houver possibilidade no seu caso, voce pode evitar continuar perdendo dinheiro." },
+                  { icon: Zap, title: "Ganhe clareza em minutos", desc: "Sem precisar interpretar lei, decreto ou regra confusa sozinho." },
+                  { icon: ShieldCheck, title: "Evite erro e perda de tempo", desc: "Saiba se o seu caso faz sentido antes de sair juntando documento a toa." },
+                  { icon: Target, title: "Entenda a regra do seu estado", desc: "Porque isencao de IPVA nao funciona igual no Brasil inteiro." },
+                  { icon: Eye, title: "Tome decisao com mais seguranca", desc: "Voce para de agir no escuro e passa a enxergar o caminho." },
+                ].map(({ icon: Icon, title, desc }, i) => (
+                  <Card key={i} className="p-5 bg-white/5 border-white/10 text-left">
+                    <Icon className="w-8 h-8 text-green-400 mb-3" />
+                    <h3 className="font-bold text-white mb-1 text-sm">{title}</h3>
+                    <p className="text-blue-200 text-xs leading-relaxed">{desc}</p>
+                  </Card>
+                ))}
+              </div>
+
+              <CTAButton text="VERIFICAR AGORA" className="bg-green-500 hover:bg-green-600" />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========== PROVA SOCIAL ========== */}
+      {landing && (
+        <section className="py-12 sm:py-16 bg-white">
+          <div className="container">
+            <div className="max-w-3xl mx-auto text-center space-y-8">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+                Quem verifica antes, economiza antes
+              </h2>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                  <p className="text-2xl sm:text-3xl font-extrabold text-green-700">+3.000</p>
+                  <p className="text-xs sm:text-sm text-green-800 font-medium">analises realizadas</p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <p className="text-2xl sm:text-3xl font-extrabold text-blue-700">27</p>
+                  <p className="text-xs sm:text-sm text-blue-800 font-medium">estados contemplados</p>
+                </div>
+                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                  <p className="text-2xl sm:text-3xl font-extrabold text-purple-700">1000+</p>
+                  <p className="text-xs sm:text-sm text-purple-800 font-medium">familias atendidas</p>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4">
+                {DEPOIMENTOS.map((dep, i) => (
+                  <Card key={i} className="p-5 border-2 border-gray-100 text-left">
+                    <div className="flex gap-1 mb-3">
+                      {[1,2,3,4,5].map(s => (
+                        <Star key={s} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-gray-700 text-sm italic mb-3">"{dep.texto}"</p>
+                    <p className="text-gray-500 text-xs font-semibold">— {dep.nome}, {dep.estado}</p>
+                  </Card>
+                ))}
+              </div>
+
+              <CTAButton text="QUERO FAZER MINHA VERIFICACAO" />
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========== OBJECOES ========== */}
+      {landing && (
+        <section className="py-12 sm:py-16 bg-gray-50">
+          <div className="container">
+            <div className="max-w-3xl mx-auto space-y-6">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center">
+                Ainda acha que talvez nao seja para voce?
+              </h2>
+
+              <div className="space-y-3">
+                {[
+                  { obj: '"Mas a pessoa nem dirige."', resp: "Em muitos casos, isso nao impede a analise. O que importa e entender a condicao e a regra aplicavel." },
+                  { obj: '"Meu caso parece diferente."', resp: "Justamente por isso vale verificar. Ha situacoes que muita gente desconhece." },
+                  { obj: '"Nao sei quais documentos preciso."', resp: "A analise ajuda voce a entender o cenario antes de sair fazendo tudo no escuro." },
+                  { obj: '"Ja paguei IPVA antes."', resp: "Mesmo assim, vale entender sua situacao atual para nao continuar pagando sem necessidade." },
+                  { obj: '"Tenho medo de perder tempo."', resp: "Voce leva poucos minutos para descobrir se faz sentido avancar." },
+                ].map(({ obj, resp }, i) => (
+                  <div key={i} className="bg-white rounded-xl p-5 border border-gray-200">
+                    <p className="font-bold text-gray-900 mb-1">{obj}</p>
+                    <p className="text-gray-600 text-sm">{resp}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-center pt-2">
+                <CTAButton text="DESCOBRIR MEU DIREITO AGORA" />
               </div>
             </div>
           </div>
         </section>
       )}
 
-      {/* Como Funciona */}
-      {!showForm && !documentoGerado && (
-        <section className="py-16 lg:py-20 bg-gray-50">
+      {/* ========== PRICING ========== */}
+      {landing && (
+        <section className="py-12 sm:py-16 bg-white" id="planos">
           <div className="container">
-            <h2 className="text-3xl font-bold text-center text-blue-900 mb-4">
-              Como Funciona
-            </h2>
-            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-              Em menos de 2 minutos você descobre se tem direito e recebe o guia completo para solicitar
-            </p>
+            <div className="max-w-5xl mx-auto text-center space-y-8">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900">Escolha seu plano</h2>
+              <p className="text-gray-500">Acesso a plataforma com relatorio personalizado, documentacao e passo a passo</p>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              <Card className="p-8 border-2 border-blue-100 hover:border-blue-300 transition-colors text-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 mb-6 mx-auto">
-                  <span className="text-2xl font-bold text-blue-700">1</span>
-                </div>
-                <h3 className="text-xl font-bold text-blue-900 mb-3">Informe seus dados</h3>
-                <p className="text-gray-600">
-                  Estado, tipo de deficiência, veículo e valor. Leva menos de 2 minutos.
-                </p>
-              </Card>
-
-              <Card className="p-8 border-2 border-green-100 hover:border-green-300 transition-colors text-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-100 mb-6 mx-auto">
-                  <Zap className="w-7 h-7 text-green-600" />
-                </div>
-                <h3 className="text-xl font-bold text-green-900 mb-3">Análise Instantânea</h3>
-                <p className="text-gray-600">
-                  Cruzamos com a legislação específica do seu estado e verificamos sua elegibilidade.
-                </p>
-              </Card>
-
-              <Card className="p-8 border-2 border-blue-100 hover:border-blue-300 transition-colors text-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 mb-6 mx-auto">
-                  <FileText className="w-7 h-7 text-blue-700" />
-                </div>
-                <h3 className="text-xl font-bold text-blue-900 mb-3">Relatório Completo</h3>
-                <p className="text-gray-600">
-                  Documentação necessária, passo a passo exato e link oficial do seu estado.
-                </p>
-              </Card>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Pricing */}
-      {!showForm && !documentoGerado && (
-        <section className="py-16 lg:py-20 bg-white" id="planos">
-          <div className="container">
-            <h2 className="text-3xl lg:text-4xl font-bold text-center text-blue-900 mb-4">
-              Escolha seu Plano
-            </h2>
-            <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto text-lg">
-              Acesso completo a plataforma com relatorio personalizado, documentacao e passo a passo
-            </p>
-
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              {/* Relatorio Avulso */}
-              <Card className="p-8 border-2 border-gray-200 hover:border-blue-300 transition-colors relative">
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-xl font-bold text-gray-900">Relatorio Avulso</h3>
+              <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
+                {/* Avulso */}
+                <Card className="p-6 border-2 border-gray-200 hover:border-blue-300 transition-colors">
+                  <div className="mb-4">
+                    <FileText className="w-6 h-6 text-blue-600 mb-2" />
+                    <h3 className="text-lg font-bold text-gray-900">Relatorio Avulso</h3>
+                    <p className="text-xs text-gray-500">Ideal para quem quer testar</p>
                   </div>
-                  <p className="text-sm text-gray-500">Ideal para quem quer testar</p>
-                </div>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-900">R$ 17</span>
-                  <span className="text-gray-500 ml-1">unico</span>
-                </div>
-                <ul className="space-y-3 mb-8 text-sm">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> 1 relatorio completo</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Estado + condicao a escolha</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Documentacao necessaria</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Passo a passo da SEFAZ</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Link oficial do estado</li>
-                  <li className="flex items-center gap-2 text-gray-400"><Lock className="w-4 h-4" /> Relatorios ilimitados</li>
-                  <li className="flex items-center gap-2 text-gray-400"><Lock className="w-4 h-4" /> Restituicao retroativa</li>
-                </ul>
-                <a
-                  href="https://pay.kiwify.com.br/K9D0GGL"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-center px-6 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-gray-800 transition-colors"
-                >
-                  Gerar meu relatorio
-                </a>
-              </Card>
-
-              {/* Plano Anual */}
-              <Card className="p-8 border-2 border-blue-500 hover:border-blue-600 transition-colors relative shadow-lg scale-[1.02]">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-4 py-1 rounded-full">
-                  Mais popular
-                </div>
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Star className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-xl font-bold text-gray-900">Plano Anual</h3>
+                  <div className="mb-4">
+                    <span className="text-3xl font-extrabold text-gray-900">R$ 17</span>
+                    <span className="text-gray-400 ml-1 text-sm">unico</span>
                   </div>
-                  <p className="text-sm text-gray-500">Acesso completo por 12 meses</p>
-                </div>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-900">R$ 37</span>
-                  <span className="text-gray-500 ml-1">/ano</span>
-                </div>
-                <ul className="space-y-3 mb-8 text-sm">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Relatorios ilimitados</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Todos os 27 estados</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Todas as condicoes cobertas</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Documentacao completa</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Passo a passo + link SEFAZ</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Guia de restituicao retroativa</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Atualizacoes por 12 meses</li>
-                </ul>
-                <a
-                  href="https://pay.kiwify.com.br/LvHpEUd"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-center px-6 py-3 bg-blue-700 text-white font-semibold rounded-lg hover:bg-blue-800 transition-colors"
-                >
-                  Assinar agora
-                </a>
-                <p className="text-center text-xs text-gray-500 mt-3">7 dias de garantia</p>
-              </Card>
+                  <ul className="space-y-2 mb-6 text-sm">
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> 1 relatorio completo</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Documentacao necessaria</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Passo a passo da SEFAZ</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Link oficial do estado</li>
+                    <li className="flex items-center gap-2 text-gray-400"><Lock className="w-4 h-4" /> Relatorios ilimitados</li>
+                  </ul>
+                  <a href="https://pay.kiwify.com.br/K9D0GGL" target="_blank" rel="noopener noreferrer"
+                    className="block w-full text-center py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-colors text-sm">
+                    Gerar meu relatorio
+                  </a>
+                </Card>
 
-              {/* Consultoria */}
-              <Card className="p-8 border-2 border-purple-200 hover:border-purple-400 transition-colors relative">
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Crown className="w-5 h-5 text-purple-600" />
-                    <h3 className="text-xl font-bold text-gray-900">Consultoria Juridica</h3>
+                {/* Anual */}
+                <Card className="p-6 border-2 border-green-500 hover:border-green-600 transition-colors relative shadow-xl scale-[1.03]">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-white text-xs font-bold px-4 py-1 rounded-full">
+                    Mais popular
                   </div>
-                  <p className="text-sm text-gray-500">Acompanhamento profissional</p>
-                </div>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-900">R$ 297</span>
-                  <span className="text-gray-500 ml-1">unico</span>
-                </div>
-                <ul className="space-y-3 mb-8 text-sm">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Tudo do Plano Anual</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Consultoria com advogado</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Analise do seu caso especifico</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Orientacao para dar entrada</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Modelo de peticao pronta</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Suporte via WhatsApp</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Acompanhamento do processo</li>
-                </ul>
-                <a
-                  href="https://pay.kiwify.com.br/CDOzVHV"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-center px-6 py-3 bg-purple-700 text-white font-semibold rounded-lg hover:bg-purple-800 transition-colors"
-                >
-                  Contratar consultoria
-                </a>
-              </Card>
-            </div>
+                  <div className="mb-4">
+                    <Star className="w-6 h-6 text-green-600 mb-2" />
+                    <h3 className="text-lg font-bold text-gray-900">Plano Anual</h3>
+                    <p className="text-xs text-gray-500">Acesso completo por 12 meses</p>
+                  </div>
+                  <div className="mb-4">
+                    <span className="text-3xl font-extrabold text-gray-900">R$ 37</span>
+                    <span className="text-gray-400 ml-1 text-sm">/ano</span>
+                  </div>
+                  <ul className="space-y-2 mb-6 text-sm">
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Relatorios ilimitados</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Todos os 27 estados</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Documentacao completa</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Guia de restituicao retroativa</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Atualizacoes por 12 meses</li>
+                  </ul>
+                  <a href="https://pay.kiwify.com.br/LvHpEUd" target="_blank" rel="noopener noreferrer"
+                    className="block w-full text-center py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors text-sm">
+                    Assinar agora
+                  </a>
+                  <p className="text-center text-xs text-gray-400 mt-2">7 dias de garantia</p>
+                </Card>
 
-            <div className="text-center mt-8">
-              <a
-                href={`${import.meta.env.BASE_URL}plataforma`.replace("//", "/")}
-                className="text-blue-700 font-semibold hover:underline"
-              >
+                {/* Consultoria */}
+                <Card className="p-6 border-2 border-purple-200 hover:border-purple-400 transition-colors">
+                  <div className="mb-4">
+                    <Crown className="w-6 h-6 text-purple-600 mb-2" />
+                    <h3 className="text-lg font-bold text-gray-900">Consultoria Juridica</h3>
+                    <p className="text-xs text-gray-500">Acompanhamento profissional</p>
+                  </div>
+                  <div className="mb-4">
+                    <span className="text-3xl font-extrabold text-gray-900">R$ 297</span>
+                    <span className="text-gray-400 ml-1 text-sm">unico</span>
+                  </div>
+                  <ul className="space-y-2 mb-6 text-sm">
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Tudo do Plano Anual</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Consultoria com advogado</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Modelo de peticao pronta</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Suporte via WhatsApp</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-purple-500" /> Acompanhamento do processo</li>
+                  </ul>
+                  <a href="https://pay.kiwify.com.br/CDOzVHV" target="_blank" rel="noopener noreferrer"
+                    className="block w-full text-center py-3 bg-purple-700 text-white font-bold rounded-xl hover:bg-purple-800 transition-colors text-sm">
+                    Contratar consultoria
+                  </a>
+                </Card>
+              </div>
+
+              <a href={`${import.meta.env.BASE_URL}plataforma`.replace("//", "/")}
+                className="text-blue-700 font-semibold hover:underline text-sm">
                 Ja comprou? Acesse a plataforma aqui →
               </a>
             </div>
@@ -381,94 +499,83 @@ export default function Home() {
         </section>
       )}
 
-      {/* FAQ */}
-      {!showForm && !documentoGerado && (
-        <section className="py-16 lg:py-20 bg-gray-50">
+      {/* ========== URGENCIA ========== */}
+      {landing && (
+        <section className="py-12 sm:py-16 bg-gradient-to-r from-red-600 to-red-700 text-white">
           <div className="container">
-            <h2 className="text-3xl font-bold text-center text-blue-900 mb-4">
-              Dúvidas Frequentes
-            </h2>
-            <p className="text-center text-gray-600 mb-12">As perguntas que mais recebemos de pais e responsáveis</p>
-
-            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              <Card className="p-6 border-2 border-gray-100 hover:border-green-200 transition-colors">
-                <h3 className="text-lg font-bold text-blue-900 mb-3">
-                  🧩 Autismo (TEA) dá direito à isenção?
-                </h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  Sim! O Transtorno do Espectro Autista é reconhecido em <strong>todos os 27 estados</strong> como deficiência elegível. Mesmo que a criança não dirija, o veículo dos pais pode ser isento — com laudo de prazo indeterminado na maioria dos estados.
-                </p>
-              </Card>
-
-              <Card className="p-6 border-2 border-gray-100 hover:border-green-200 transition-colors">
-                <h3 className="text-lg font-bold text-blue-900 mb-3">
-                  🚗 A criança não dirige — ainda assim tenho direito?
-                </h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  Na grande maioria dos estados, sim. O benefício é para o <strong>veículo usado no transporte da pessoa com deficiência</strong>, não necessariamente para o condutor. Nosso sistema verifica as regras específicas do seu estado.
-                </p>
-              </Card>
-
-              <Card className="p-6 border-2 border-gray-100 hover:border-green-200 transition-colors">
-                <h3 className="text-lg font-bold text-blue-900 mb-3">
-                  💰 Qual é o limite de valor do veículo?
-                </h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  Varia por estado: de R$ 70 mil (Acre) até <strong>sem limite</strong> (São Paulo, Rio de Janeiro e outros). Nosso sistema mostra o teto exato do seu estado e se seu veículo se enquadra.
-                </p>
-              </Card>
-
-              <Card className="p-6 border-2 border-gray-100 hover:border-green-200 transition-colors">
-                <h3 className="text-lg font-bold text-blue-900 mb-3">
-                  📋 Preciso de laudo médico?
-                </h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  Sim, todos os estados exigem laudo médico. Para TEA, o laudo tem <strong>prazo indeterminado</strong> na maioria dos estados. Nosso relatório mostra exatamente qual tipo de laudo é necessário e onde obter.
-                </p>
-              </Card>
-
-              <Card className="p-6 border-2 border-gray-100 hover:border-green-200 transition-colors">
-                <h3 className="text-lg font-bold text-blue-900 mb-3">
-                  🔄 Posso pedir isenção de veículo usado?
-                </h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  Sim! A maioria dos estados aceita veículos novos e usados. Alguns têm tetos diferentes para cada categoria. Informe o tipo do seu veículo no teste e veja as regras do seu estado.
-                </p>
-              </Card>
-
-              <Card className="p-6 border-2 border-gray-100 hover:border-green-200 transition-colors">
-                <h3 className="text-lg font-bold text-blue-900 mb-3">
-                  📅 Posso pedir isenção de anos anteriores?
-                </h3>
-                <p className="text-gray-700 text-sm leading-relaxed">
-                  Depende do estado. Alguns permitem restituição de valores pagos indevidamente. Nosso relatório inclui informações sobre retroatividade e prazos para o seu estado.
-                </p>
-              </Card>
-            </div>
-
-            <div className="text-center mt-12">
-              <Button
-                onClick={() => setShowForm(true)}
-                className="h-14 px-10 text-lg font-semibold bg-green-600 hover:bg-green-700 text-white rounded-lg shadow-lg"
-              >
-                Verificar Meu Direito Agora →
-              </Button>
-              <p className="text-sm text-gray-500 mt-3">
-                Já ajudamos mais de 3.000 famílias a economizar com IPVA
+            <div className="max-w-3xl mx-auto text-center space-y-6">
+              <Clock className="w-12 h-12 mx-auto text-yellow-300" />
+              <h2 className="text-2xl sm:text-3xl font-extrabold">
+                Quanto mais voce demora, mais tempo pode continuar pagando sem precisar
+              </h2>
+              <p className="text-red-100 text-base sm:text-lg">
+                Se existe a possibilidade de isencao no seu caso, adiar a verificacao so faz voce perder tempo e dinheiro. Alem disso, regras, exigencias e prazos podem variar conforme o estado.
               </p>
+              <div className="bg-white/10 border border-white/20 rounded-xl p-5">
+                <p className="font-extrabold text-xl sm:text-2xl text-yellow-300">A melhor hora para verificar e agora.</p>
+              </div>
+              <CTAButton text="VERIFICAR AGORA MESMO" className="bg-yellow-500 hover:bg-yellow-600 text-gray-900" />
             </div>
           </div>
         </section>
       )}
 
-      {/* Formulário com Captura de Lead */}
+      {/* ========== FAQ ========== */}
+      {landing && (
+        <section className="py-12 sm:py-16 bg-white">
+          <div className="container">
+            <div className="max-w-2xl mx-auto space-y-6">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center">Perguntas frequentes</h2>
+
+              <div className="space-y-2">
+                {FAQ_ITEMS.map((item, i) => (
+                  <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
+                    <button
+                      onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                      className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="font-semibold text-gray-900 text-sm pr-4">{item.q}</span>
+                      <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${faqOpen === i ? "rotate-180" : ""}`} />
+                    </button>
+                    {faqOpen === i && (
+                      <div className="px-4 pb-4">
+                        <p className="text-gray-600 text-sm">{item.a}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========== CTA FINAL ========== */}
+      {landing && (
+        <section className="py-12 sm:py-20 bg-blue-950 text-white">
+          <div className="container">
+            <div className="max-w-3xl mx-auto text-center space-y-6">
+              <h2 className="text-2xl sm:text-4xl font-extrabold">
+                Nao continue pagando IPVA no escuro
+              </h2>
+              <p className="text-blue-200 text-base sm:text-lg">
+                Verifique agora se existe possibilidade de isencao para voce ou sua familia.
+              </p>
+              <CTAButton text="COMECAR VERIFICACAO AGORA" className="bg-green-500 hover:bg-green-600" />
+              <p className="text-blue-400 text-xs">Menos de 2 minutos • Resultado imediato</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ========== FORMULARIO ========== */}
       {showForm && !documentoGerado && (
-        <section className="py-12 lg:py-20">
+        <section className="py-8 sm:py-12 bg-gray-50 min-h-[60vh]">
           <div className="container">
             <Button
               onClick={() => setShowForm(false)}
               variant="outline"
-              className="mb-8"
+              className="mb-6"
             >
               ← Voltar
             </Button>
@@ -481,7 +588,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* Página de Resultado */}
+      {/* ========== RESULTADO ========== */}
       {documentoGerado && (
         <ResultPage
           dados={documentoGerado}
@@ -493,41 +600,18 @@ export default function Home() {
         />
       )}
 
-      {/* Footer */}
-      <footer className="bg-blue-900 text-white py-10 mt-0">
+      {/* ========== FOOTER ========== */}
+      <footer className="bg-gray-900 text-white py-8">
         <div className="container">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Shield className="w-6 h-6 text-blue-300" />
-                <h4 className="font-bold text-lg">IPVA Zero PCD</h4>
-              </div>
-              <p className="text-blue-200 text-sm leading-relaxed">
-                Plataforma gratuita de análise de isenção de IPVA para Pessoas com Deficiência em todos os 27 estados brasileiros.
-              </p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-blue-400" />
+              <span className="font-bold">IPVA Zero</span>
             </div>
-            <div>
-              <h4 className="font-bold mb-4 text-blue-100">Informações</h4>
-              <ul className="space-y-2 text-sm text-blue-200">
-                <li><a href="#" className="hover:text-white transition-colors">Sobre IPVA PCD</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Legislação por Estado</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contato</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-4 text-blue-100">Legal</h4>
-              <ul className="space-y-2 text-sm text-blue-200">
-                <li><a href="#" className="hover:text-white transition-colors">Política de Privacidade</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Termos de Uso</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">LGPD</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-blue-800 pt-6 text-center text-blue-300 text-sm">
-            <p>© 2026 IPVA Zero PCD. Todos os direitos reservados.</p>
-            <p className="mt-1 text-xs text-blue-400">
-              As informações desta plataforma são de caráter orientativo. Consulte sempre a SEFAZ do seu estado para confirmação.
+            <p className="text-gray-400 text-xs text-center">
+              As informacoes desta plataforma sao de carater orientativo. Consulte sempre a SEFAZ do seu estado.
             </p>
+            <p className="text-gray-500 text-xs">© 2026 IPVA Zero</p>
           </div>
         </div>
       </footer>
