@@ -1,25 +1,49 @@
+// === Alert bar offset for header ===
+(function () {
+  const alertBar = document.querySelector('.alert-bar');
+  const header = document.getElementById('header');
+  if (alertBar && header) {
+    const alertHeight = alertBar.offsetHeight;
+    header.style.top = alertHeight + 'px';
+    document.body.style.paddingTop = (alertHeight + header.offsetHeight) + 'px';
+
+    // Recalculate on resize
+    window.addEventListener('resize', () => {
+      const h = alertBar.offsetHeight;
+      header.style.top = h + 'px';
+      document.body.style.paddingTop = (h + header.offsetHeight) + 'px';
+    });
+  }
+})();
+
 // === Header scroll effect ===
 const header = document.getElementById('header');
-window.addEventListener('scroll', () => {
-  header.classList.toggle('scrolled', window.scrollY > 20);
-});
+if (header) {
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('scrolled', window.scrollY > 20);
+  });
+}
 
-// === Mobile menu ===
+// === Mobile menu toggle ===
 const menuToggle = document.getElementById('menuToggle');
 const mobileMenu = document.getElementById('mobileMenu');
 
-menuToggle.addEventListener('click', () => {
-  menuToggle.classList.toggle('active');
-  mobileMenu.classList.toggle('active');
-});
-
-// Close mobile menu on link click
-mobileMenu.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', () => {
-    menuToggle.classList.remove('active');
-    mobileMenu.classList.remove('active');
+if (menuToggle && mobileMenu) {
+  menuToggle.addEventListener('click', () => {
+    menuToggle.classList.toggle('active');
+    mobileMenu.classList.toggle('active');
+    document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
   });
-});
+
+  // Close mobile menu on link click
+  mobileMenu.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      menuToggle.classList.remove('active');
+      mobileMenu.classList.remove('active');
+      document.body.style.overflow = '';
+    });
+  });
+}
 
 // === FAQ Accordion ===
 document.querySelectorAll('.faq-question').forEach(button => {
@@ -39,19 +63,17 @@ document.querySelectorAll('.faq-question').forEach(button => {
 
 // === Counter animation ===
 function animateCounters() {
-  document.querySelectorAll('.stat-number').forEach(counter => {
+  document.querySelectorAll('.proof-number').forEach(counter => {
     const target = parseInt(counter.getAttribute('data-target'));
+    if (!target) return;
     const duration = 2000;
     const start = performance.now();
 
     function update(now) {
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.round(eased * target);
-
-      // Format numbers with dots for thousands
       counter.textContent = current.toLocaleString('pt-BR');
 
       if (progress < 1) {
@@ -66,13 +88,13 @@ function animateCounters() {
 // === Scroll reveal ===
 const observerOptions = {
   threshold: 0.1,
-  rootMargin: '0px 0px -40px 0px'
+  rootMargin: '0px 0px -30px 0px'
 };
 
 const observer = new IntersectionObserver((entries) => {
   entries.forEach((entry, index) => {
     if (entry.isIntersecting) {
-      const delay = index * 80;
+      const delay = index * 60;
       setTimeout(() => {
         entry.target.classList.add('visible');
       }, delay);
@@ -81,129 +103,34 @@ const observer = new IntersectionObserver((entries) => {
   });
 }, observerOptions);
 
-document.querySelectorAll('.benefit-card, .eligibility-category, .step, .state-card, .testimonial-card, .faq-item, .pricing-card').forEach(el => {
+document.querySelectorAll(
+  '.pain-card, .eligible-category, .step, .benefit-card, .testimonial-card, .receive-item, .objection-card, .pricing-card, .faq-item, .fade-in'
+).forEach(el => {
+  el.classList.add('fade-in');
   observer.observe(el);
 });
 
 // === Counter observer ===
-const heroObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      animateCounters();
-      heroObserver.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.3 });
-
-const heroStats = document.querySelector('.hero-stats');
-if (heroStats) {
-  heroObserver.observe(heroStats);
+const proofSection = document.querySelector('.proof-stats');
+if (proofSection) {
+  const counterObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounters();
+        counterObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  counterObserver.observe(proofSection);
 }
 
 // === Smooth scroll for anchor links ===
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', function(e) {
-    const target = document.querySelector(this.getAttribute('href'));
-    if (target) {
+  anchor.addEventListener('click', function (e) {
+    const targetEl = document.querySelector(this.getAttribute('href'));
+    if (targetEl) {
       e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth' });
+      targetEl.scrollIntoView({ behavior: 'smooth' });
     }
-  });
-});
-
-// === Verificador (Preview + Paywall Flow) ===
-const estados = {
-  'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas',
-  'BA': 'Bahia', 'CE': 'Ceará', 'DF': 'Distrito Federal', 'ES': 'Espírito Santo',
-  'GO': 'Goiás', 'MA': 'Maranhão', 'MT': 'Mato Grosso', 'MS': 'Mato Grosso do Sul',
-  'MG': 'Minas Gerais', 'PA': 'Pará', 'PB': 'Paraíba', 'PR': 'Paraná',
-  'PE': 'Pernambuco', 'PI': 'Piauí', 'RJ': 'Rio de Janeiro', 'RN': 'Rio Grande do Norte',
-  'RS': 'Rio Grande do Sul', 'RO': 'Rondônia', 'RR': 'Roraima', 'SC': 'Santa Catarina',
-  'SP': 'São Paulo', 'SE': 'Sergipe', 'TO': 'Tocantins'
-};
-
-const condicoes = {
-  'paraplegia': 'Paraplegia / Tetraplegia',
-  'amputacao': 'Amputação ou ausência de membros',
-  'paralisia_cerebral': 'Paralisia cerebral',
-  'nanismo': 'Nanismo',
-  'coluna': 'Problemas graves na coluna',
-  'avc': 'Sequelas de AVC',
-  'ler_dort': 'LER/DORT grave',
-  'artrodese': 'Artrodese ou próteses',
-  'cegueira': 'Cegueira total',
-  'baixa_visao': 'Baixa visão',
-  'visao_monocular': 'Visão monocular',
-  'surdez': 'Surdez total ou parcial',
-  'tea': 'Transtorno do Espectro Autista (TEA)',
-  'sindrome_down': 'Síndrome de Down',
-  'deficiencia_intelectual': 'Deficiência intelectual',
-  'esquizofrenia': 'Esquizofrenia',
-  'cancer': 'Câncer (neoplasia maligna)',
-  'hiv': 'HIV/AIDS',
-  'esclerose': 'Esclerose múltipla',
-  'parkinson': 'Doença de Parkinson',
-  'hepatopatia': 'Hepatopatia grave',
-  'renal': 'Doença renal crônica',
-  'cardiopatia': 'Cardiopatia grave',
-  'artrite': 'Artrite reumatoide',
-  'fibromialgia': 'Fibromialgia severa',
-  'outra': 'Outra condição'
-};
-
-const selectEstado = document.getElementById('selectEstado');
-const selectCondicao = document.getElementById('selectCondicao');
-const btnStep1 = document.getElementById('btnStep1');
-const btnStep2 = document.getElementById('btnStep2');
-const formStep1 = document.getElementById('formStep1');
-const formStep2 = document.getElementById('formStep2');
-const verificadorForm = document.getElementById('verificadorForm');
-const previewResult = document.getElementById('previewResult');
-const previewSummary = document.getElementById('previewSummary');
-
-if (btnStep1) {
-  btnStep1.addEventListener('click', () => {
-    if (!selectEstado.value) {
-      selectEstado.focus();
-      selectEstado.style.borderColor = '#e74c3c';
-      setTimeout(() => { selectEstado.style.borderColor = ''; }, 2000);
-      return;
-    }
-    formStep1.classList.remove('active');
-    formStep2.classList.add('active');
-  });
-}
-
-if (btnStep2) {
-  btnStep2.addEventListener('click', () => {
-    if (!selectCondicao.value) {
-      selectCondicao.focus();
-      selectCondicao.style.borderColor = '#e74c3c';
-      setTimeout(() => { selectCondicao.style.borderColor = ''; }, 2000);
-      return;
-    }
-
-    const estadoNome = estados[selectEstado.value] || selectEstado.value;
-    const condicaoNome = condicoes[selectCondicao.value] || selectCondicao.value;
-
-    previewSummary.innerHTML = `O estado de <strong>${estadoNome}</strong> possui legislação que prevê isenção de IPVA para pessoas com <strong>${condicaoNome}</strong>. Veja abaixo o que está incluído no seu relatório completo.`;
-
-    verificadorForm.style.display = 'none';
-    previewResult.style.display = 'block';
-  });
-}
-
-// === Pricing button clicks — redirect to Kiwify checkout ===
-const kiwifyLinks = {
-  avulso: 'https://pay.kiwify.com.br/K9D0GGL',
-  anual: 'https://pay.kiwify.com.br/LvHpEUd',
-  consultoria: 'https://pay.kiwify.com.br/CDOzVHV',
-};
-document.querySelectorAll('.btn-pricing').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.preventDefault();
-    const plan = btn.getAttribute('data-plan');
-    const url = kiwifyLinks[plan] || kiwifyLinks.anual;
-    window.open(url, '_blank');
   });
 });
