@@ -193,11 +193,17 @@ if (btnStep2) {
   });
 }
 
-// === Pricing button clicks — redirect to registration ===
+// === Pricing button clicks — redirect to Kiwify checkout ===
+const kiwifyLinks = {
+  avulso: 'https://pay.kiwify.com.br/K9D0GGL',
+  anual: 'https://pay.kiwify.com.br/LvHpEUd',
+  consultoria: 'https://pay.kiwify.com.br/CDOzVHV',
+};
 document.querySelectorAll('.btn-pricing').forEach(btn => {
   btn.addEventListener('click', (e) => {
     e.preventDefault();
     const plan = btn.getAttribute('data-plan');
-    window.location.href = 'cadastro.html?plano=' + plan;
+    const url = kiwifyLinks[plan] || kiwifyLinks.anual;
+    window.open(url, '_blank');
   });
 });
