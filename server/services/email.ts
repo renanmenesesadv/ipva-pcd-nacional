@@ -1,6 +1,6 @@
 // Serviço de email via Resend API (sem dependência extra)
 const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
-const FROM_EMAIL = "IPVA Zero <noreply@ipvazero.com.br>";
+const FROM_EMAIL = "IPVA Zero <comercial@ipvazero.com.br>";
 
 interface EmailOptions {
   to: string;
