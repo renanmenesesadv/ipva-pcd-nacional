@@ -84,3 +84,18 @@ export const customers = mysqlTable("customers", {
 
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = typeof customers.$inferInsert;
+
+// Tabela de log de eventos do webhook (auditoria)
+export const webhookEvents = mysqlTable("webhook_events", {
+  id: int("id").autoincrement().primaryKey(),
+  eventType: varchar("eventType", { length: 50 }).notNull(), // "order_approved", "order_refunded", etc.
+  orderId: varchar("orderId", { length: 100 }),
+  email: varchar("email", { length: 320 }),
+  productName: varchar("productName", { length: 255 }),
+  plano: varchar("plano", { length: 50 }),
+  status: varchar("status", { length: 20 }).notNull(), // "success", "error", "ignored"
+  errorMessage: text("errorMessage"),
+  rawPayload: text("rawPayload"), // JSON do payload completo
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
