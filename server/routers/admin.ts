@@ -2,8 +2,8 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
-import { leads, customers } from "../../drizzle/schema";
-import { eq, desc, like, and, or } from "drizzle-orm";
+import { leads, customers, webhookEvents } from "../../drizzle/schema";
+import { eq, desc, like, and, or, sql } from "drizzle-orm";
 
 // Middleware para verificar se é admin
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -276,4 +276,106 @@ export const adminRouter = router({
 
       return { success: true };
     }),
+
+  // ===== WEBHOOK EVENTS LOG (AUDITORIA) =====
+
+  // Listar eventos do webhook com paginação
+  listarWebhookEvents: adminProcedure
+    .input(
+      z.object({
+        pagina: z.number().default(1),
+        porPagina: z.number().default(50),
+        status: z.string().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const offset = (input.pagina - 1) * input.porPagina;
+
+      const conditions = [];
+      if (input.status) conditions.push(eq(webhookEvents.status, input.status));
+
+      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+      const [events, totalCount] = await Promise.all([
+        db.select().from(webhookEvents)
+          .where(whereClause)
+          .orderBy(desc(webhookEvents.createdAt))
+          .limit(input.porPagina)
+          .offset(offset),
+        db.select({ count: sql<number>`count(*)` }).from(webhookEvents).where(whereClause),
+      ]);
+
+      return {
+        events,
+        total: Number(totalCount[0]?.count || 0),
+        paginas: Math.ceil(Number(totalCount[0]?.count || 0) / input.porPagina),
+        paginaAtual: input.pagina,
+      };
+    }),
+
+  // Estatísticas de webhook
+  webhookStats: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const all = await db.select().from(webhookEvents).orderBy(desc(webhookEvents.createdAt));
+
+    const total = all.length;
+    const success = all.filter(e => e.status === "success").length;
+    const errors = all.filter(e => e.status === "error").length;
+    const ignored = all.filter(e => e.status === "ignored").length;
+    const last7days = all.filter(e => {
+      const d = new Date(e.createdAt);
+      return d >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    }).length;
+
+    return { total, success, errors, ignored, last7days, ultimosEventos: all.slice(0, 10) };
+  }),
+
+  // ===== DASHBOARD DE RECEITA =====
+
+  dashboardReceita: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const allCustomers = await db.select().from(customers);
+
+    const ativos = allCustomers.filter(c => c.status === "active");
+    const reembolsados = allCustomers.filter(c => c.status === "refunded");
+
+    // Receita por plano
+    const precos = { relatorio_avulso: 17, plano_anual: 37, consultoria: 297 };
+    let receitaTotal = 0;
+    let receitaAtiva = 0;
+    const porPlano = { relatorio_avulso: 0, plano_anual: 0, consultoria: 0 };
+
+    allCustomers.forEach(c => {
+      if (c.status !== "refunded") {
+        const valor = precos[c.plano] || 0;
+        receitaTotal += valor;
+        porPlano[c.plano]++;
+        if (c.status === "active") receitaAtiva += valor;
+      }
+    });
+
+    // Últimos 30 dias
+    const ultimos30 = allCustomers.filter(c => {
+      const d = new Date(c.createdAt);
+      return d >= new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) && c.status !== "refunded";
+    });
+    const receita30dias = ultimos30.reduce((sum, c) => sum + (precos[c.plano] || 0), 0);
+
+    return {
+      totalClientes: allCustomers.length,
+      clientesAtivos: ativos.length,
+      clientesReembolsados: reembolsados.length,
+      receitaTotal,
+      receitaAtiva,
+      receita30dias,
+      porPlano,
+    };
+  }),
 });

@@ -33,7 +33,7 @@ export default function AdminDashboard() {
   const [filtroElegivel, setFiltroElegivel] = useState("todos");
   const [filtroContatado, setFiltroContatado] = useState("todos");
   const [pagina, setPagina] = useState(1);
-  const [activeTab, setActiveTab] = useState<"leads" | "clientes">("leads");
+  const [activeTab, setActiveTab] = useState<"leads" | "clientes" | "webhooks" | "receita">("leads");
 
   // Form para adicionar cliente manualmente
   const [novoClienteEmail, setNovoClienteEmail] = useState("");
@@ -75,6 +75,20 @@ export default function AdminDashboard() {
       utils.admin.estatisticas.invalidate();
       toast.success("Status atualizado!");
     },
+  });
+
+  // === Webhook Events ===
+  const { data: webhookData } = trpc.admin.listarWebhookEvents.useQuery(
+    { pagina: 1, porPagina: 50 },
+    { enabled: isAuthenticated && user?.role === "admin" && activeTab === "webhooks" }
+  );
+  const { data: webhookStats } = trpc.admin.webhookStats.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === "admin" && activeTab === "webhooks",
+  });
+
+  // === Receita ===
+  const { data: receitaData } = trpc.admin.dashboardReceita.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === "admin" && activeTab === "receita",
   });
 
   // === Clientes ===
@@ -204,6 +218,22 @@ export default function AdminDashboard() {
                 }`}
               >
                 Clientes
+              </button>
+              <button
+                onClick={() => setActiveTab("webhooks")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === "webhooks" ? "bg-yellow-100 text-yellow-800" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Webhooks
+              </button>
+              <button
+                onClick={() => setActiveTab("receita")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === "receita" ? "bg-purple-100 text-purple-800" : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                Receita
               </button>
             </div>
           </div>
@@ -356,6 +386,129 @@ export default function AdminDashboard() {
                   </table>
                 </div>
               )}
+            </Card>
+          </div>
+        )}
+
+        {/* ===== TAB: WEBHOOKS ===== */}
+        {activeTab === "webhooks" && (
+          <div className="space-y-6">
+            {/* Stats */}
+            {webhookStats && (
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <Card className="p-4 border-l-4 border-blue-500">
+                  <p className="text-sm text-gray-600">Total</p>
+                  <p className="text-2xl font-bold">{webhookStats.total}</p>
+                </Card>
+                <Card className="p-4 border-l-4 border-green-500">
+                  <p className="text-sm text-gray-600">Sucesso</p>
+                  <p className="text-2xl font-bold text-green-700">{webhookStats.success}</p>
+                </Card>
+                <Card className="p-4 border-l-4 border-red-500">
+                  <p className="text-sm text-gray-600">Erros</p>
+                  <p className="text-2xl font-bold text-red-700">{webhookStats.errors}</p>
+                </Card>
+                <Card className="p-4 border-l-4 border-yellow-500">
+                  <p className="text-sm text-gray-600">Ignorados</p>
+                  <p className="text-2xl font-bold text-yellow-700">{webhookStats.ignored}</p>
+                </Card>
+                <Card className="p-4 border-l-4 border-purple-500">
+                  <p className="text-sm text-gray-600">Ultimos 7 dias</p>
+                  <p className="text-2xl font-bold text-purple-700">{webhookStats.last7days}</p>
+                </Card>
+              </div>
+            )}
+
+            {/* Tabela de eventos */}
+            <Card className="overflow-hidden">
+              <div className="p-4 border-b">
+                <h3 className="font-bold text-gray-900">{webhookData ? `${webhookData.total} eventos registrados` : "Carregando..."}</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 border-b">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700">Data</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700">Evento</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700">Email</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700">Plano</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
+                      <th className="px-4 py-3 text-left font-semibold text-gray-700">Order ID</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {webhookData?.events.map((ev) => (
+                      <tr key={ev.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-gray-500 text-xs">{new Date(ev.createdAt).toLocaleString("pt-BR")}</td>
+                        <td className="px-4 py-3 font-medium">{ev.eventType}</td>
+                        <td className="px-4 py-3 text-gray-700">{ev.email || "—"}</td>
+                        <td className="px-4 py-3">{ev.plano || "—"}</td>
+                        <td className="px-4 py-3">
+                          <Badge className={
+                            ev.status === "success" ? "bg-green-100 text-green-800" :
+                            ev.status === "error" ? "bg-red-100 text-red-800" :
+                            "bg-yellow-100 text-yellow-800"
+                          }>
+                            {ev.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-gray-500 text-xs font-mono">{ev.orderId || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ===== TAB: RECEITA ===== */}
+        {activeTab === "receita" && receitaData && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card className="p-6 border-l-4 border-green-500">
+                <p className="text-sm text-gray-600">Receita Total</p>
+                <p className="text-3xl font-bold text-green-700">R$ {receitaData.receitaTotal.toLocaleString("pt-BR")}</p>
+              </Card>
+              <Card className="p-6 border-l-4 border-blue-500">
+                <p className="text-sm text-gray-600">Ultimos 30 dias</p>
+                <p className="text-3xl font-bold text-blue-700">R$ {receitaData.receita30dias.toLocaleString("pt-BR")}</p>
+              </Card>
+              <Card className="p-6 border-l-4 border-purple-500">
+                <p className="text-sm text-gray-600">Clientes Ativos</p>
+                <p className="text-3xl font-bold text-purple-700">{receitaData.clientesAtivos}</p>
+              </Card>
+              <Card className="p-6 border-l-4 border-red-500">
+                <p className="text-sm text-gray-600">Reembolsados</p>
+                <p className="text-3xl font-bold text-red-700">{receitaData.clientesReembolsados}</p>
+              </Card>
+            </div>
+
+            <Card className="p-6">
+              <h3 className="font-bold text-gray-900 mb-4">Vendas por Plano</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-semibold">Relatorio Avulso (R$17)</p>
+                    <p className="text-sm text-gray-500">{receitaData.porPlano.relatorio_avulso} vendas</p>
+                  </div>
+                  <p className="text-xl font-bold">R$ {(receitaData.porPlano.relatorio_avulso * 17).toLocaleString("pt-BR")}</p>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div>
+                    <p className="font-semibold text-blue-900">Plano Anual (R$37)</p>
+                    <p className="text-sm text-blue-600">{receitaData.porPlano.plano_anual} vendas</p>
+                  </div>
+                  <p className="text-xl font-bold text-blue-900">R$ {(receitaData.porPlano.plano_anual * 37).toLocaleString("pt-BR")}</p>
+                </div>
+                <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div>
+                    <p className="font-semibold text-purple-900">Consultoria (R$297)</p>
+                    <p className="text-sm text-purple-600">{receitaData.porPlano.consultoria} vendas</p>
+                  </div>
+                  <p className="text-xl font-bold text-purple-900">R$ {(receitaData.porPlano.consultoria * 297).toLocaleString("pt-BR")}</p>
+                </div>
+              </div>
             </Card>
           </div>
         )}
