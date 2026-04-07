@@ -37,15 +37,23 @@ export default function Plataforma() {
   const [leadCapturado, setLeadCapturado] = useState(false);
   const [leadData, setLeadData] = useState<LeadData | null>(null);
 
+  const [expirationWarning, setExpirationWarning] = useState<{ expiring: boolean; days: number | null }>({ expiring: false, days: null });
+
   const verificarQuery = trpc.customers.verificarAcesso.useQuery(
     { email },
     { enabled: false }
   );
   const registrarUso = trpc.customers.registrarUso.useMutation();
+  const meusRelatorios = trpc.customers.meusRelatorios.useQuery(
+    { email },
+    { enabled: authenticated }
+  );
+  const salvarRelatorio = trpc.customers.salvarRelatorio.useMutation();
+  const atualizarConta = trpc.customers.atualizarConta.useMutation();
 
   const handleVerificar = async () => {
     if (!email || !email.includes("@")) {
-      setError("Digite um email válido");
+      setError("Digite um email valido");
       return;
     }
     setError("");
@@ -57,9 +65,13 @@ export default function Plataforma() {
         nome: result.data.nome!,
         planos: result.data.planos,
       });
+      setExpirationWarning({
+        expiring: result.data.expirandoEm30d || false,
+        days: result.data.diasParaExpirar || null,
+      });
       setAuthenticated(true);
     } else {
-      setError("Email não encontrado. Verifique se usou o mesmo email da compra na Kiwify.");
+      setError("Email nao encontrado. Verifique se usou o mesmo email da compra na Kiwify.");
     }
   };
 
@@ -237,6 +249,27 @@ export default function Plataforma() {
       </header>
 
       <div className="container py-12">
+        {/* Aviso de expiração */}
+        {expirationWarning.expiring && expirationWarning.days !== null && (
+          <div className="mb-6 bg-yellow-50 border-2 border-yellow-300 rounded-xl p-4 flex items-center gap-3">
+            <AlertCircle className="w-6 h-6 text-yellow-600 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-yellow-900 font-semibold">
+                Seu plano expira em {expirationWarning.days} dia{expirationWarning.days !== 1 ? "s" : ""}
+              </p>
+              <p className="text-yellow-700 text-sm">Renove para continuar com acesso ilimitado.</p>
+            </div>
+            <a
+              href="https://pay.kiwify.com.br/yser9l3"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors text-sm whitespace-nowrap"
+            >
+              Renovar agora
+            </a>
+          </div>
+        )}
+
         {/* Boas-vindas */}
         <div className="mb-10">
           <h2 className="text-3xl font-bold text-blue-900 mb-2">
@@ -366,6 +399,39 @@ export default function Plataforma() {
               <IPVAForm dadosLead={leadData} />
             )}
           </div>
+        )}
+
+        {/* Historico de relatorios */}
+        {meusRelatorios.data && meusRelatorios.data.length > 0 && (
+          <Card className="p-6 border border-gray-200 mb-6">
+            <h3 className="font-bold text-gray-900 mb-3">Seus Relatorios</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-gray-600">Data</th>
+                    <th className="px-3 py-2 text-left text-gray-600">Estado</th>
+                    <th className="px-3 py-2 text-left text-gray-600">Deficiencia</th>
+                    <th className="px-3 py-2 text-left text-gray-600">Resultado</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {meusRelatorios.data.map((r: any) => (
+                    <tr key={r.id}>
+                      <td className="px-3 py-2 text-gray-500 text-xs">{new Date(r.createdAt).toLocaleDateString("pt-BR")}</td>
+                      <td className="px-3 py-2">{r.estadoNome}</td>
+                      <td className="px-3 py-2">{r.deficiencia}</td>
+                      <td className="px-3 py-2">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${r.elegivel ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                          {r.elegivel ? "Elegivel" : "Nao elegivel"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         )}
 
         {/* Info dos planos ativos */}

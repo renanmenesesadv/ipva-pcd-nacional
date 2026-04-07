@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import { compress } from "./compress";
 import fs from "fs";
 import { createServer } from "http";
 import net from "net";
@@ -59,6 +60,9 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // ===== Gzip Compression =====
+  app.use(compress());
 
   // ===== Security Headers =====
   app.use((_req, res, next) => {

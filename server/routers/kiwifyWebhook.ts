@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { customers, webhookEvents } from "../../drizzle/schema";
+import { sendWelcomeEmail } from "../services/email";
 
 const kiwifyRouter = Router();
 
@@ -163,6 +164,10 @@ kiwifyRouter.post("/webhook", async (req, res) => {
       });
 
       console.log("[Kiwify Webhook] Novo cliente:", email, plano, orderId);
+
+      // Envia email de boas-vindas (async, não bloqueia resposta)
+      sendWelcomeEmail(email, nome, plano).catch(e => console.error("[Webhook Email]", e));
+
       return res.status(200).json({ ok: true, message: "Customer created" });
     }
 

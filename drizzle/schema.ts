@@ -85,6 +85,20 @@ export const customers = mysqlTable("customers", {
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = typeof customers.$inferInsert;
 
+// Tabela de relatórios gerados (histórico server-side)
+export const reports = mysqlTable("reports", {
+  id: int("id").autoincrement().primaryKey(),
+  customerEmail: varchar("customerEmail", { length: 320 }).notNull(),
+  estado: varchar("estado", { length: 2 }).notNull(),
+  estadoNome: varchar("estadoNome", { length: 100 }).notNull(),
+  deficiencia: varchar("deficiencia", { length: 100 }).notNull(),
+  condutor: varchar("condutor", { length: 10 }).notNull(),
+  tipoVeiculo: varchar("tipoVeiculo", { length: 10 }).notNull(),
+  valorVeiculo: varchar("valorVeiculo", { length: 20 }).notNull(),
+  elegivel: boolean("elegivel").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 // Tabela de log de eventos do webhook (auditoria)
 export const webhookEvents = mysqlTable("webhook_events", {
   id: int("id").autoincrement().primaryKey(),
